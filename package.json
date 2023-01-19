@@ -1,0 +1,46 @@
+{
+  "name": "@firnprotocol/snap",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Firn Protocol's official MetaMask Snap.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/firnprotocol/snap.git"
+  },
+  "files": [
+    "dist/",
+    "images/",
+    "snap.manifest.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "mm-snap build",
+    "serve": "mm-snap serve",
+    "start": "mm-snap watch",
+    "postinstall": "patch-package"
+  },
+  "dependencies": {
+    "ethers": "^5.7.2",
+    "mcl-wasm": "1.0.3"
+  },
+  "devDependencies": {
+    "@lavamoat/allow-scripts": "^2.0.3",
+    "@metamask/auto-changelog": "^2.6.0",
+    "@metamask/snap-types": "^0.22.0",
+    "@metamask/snaps-cli": "^0.22.0",
+    "patch-package": "^6.5.1",
+    "postinstall-postinstall": "^2.1.0",
+    "uglifyify": "^5.0.2"
+  },
+  "packageManager": "yarn@3.3.1",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "bugs": {
+    "url": "https://github.com/firnprotocol/snap/issues"
+  },
+  "homepage": "https://github.com/firnprotocol/snap#readme",
+  "author": "",
+  "license": "ISC"
+}

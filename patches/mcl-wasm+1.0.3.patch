@@ -1,0 +1,76 @@
+diff --git a/node_modules/mcl-wasm/dist/mcl_c.js b/node_modules/mcl-wasm/dist/mcl_c.js
+index 0f57163..3918689 100644
+--- a/node_modules/mcl-wasm/dist/mcl_c.js
++++ b/node_modules/mcl-wasm/dist/mcl_c.js
+@@ -109,12 +109,12 @@ var Module = (function () {
+             if (_scriptDir) {
+                 scriptDirectory = _scriptDir;
+             }
+-            if (scriptDirectory.indexOf("blob:") !== 0) {
+-                scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf("/") + 1);
+-            }
+-            else {
+-                scriptDirectory = "";
+-            }
++            // if (scriptDirectory.indexOf("blob:") !== 0) {
++            //     scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf("/") + 1);
++            // }
++            // else {
++            //     scriptDirectory = "";
++            // }
+             {
+                 read_ = function (url) {
+                     try {
+@@ -334,29 +334,29 @@ var Module = (function () {
+             }
+         }
+         function getBinaryPromise() {
+-            if (!wasmBinary && (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER)) {
+-                if (typeof fetch === "function" && !isFileURI(wasmBinaryFile)) {
+-                    return fetch(wasmBinaryFile, {
+-                        credentials: "same-origin"
+-                    }).then(function (response) {
+-                        if (!response["ok"]) {
+-                            throw "failed to load wasm binary file at '" + wasmBinaryFile + "'";
+-                        }
+-                        return response["arrayBuffer"]();
+-                    }).catch(function () {
+-                        return getBinary(wasmBinaryFile);
+-                    });
+-                }
+-                else {
+-                    if (readAsync) {
+-                        return new Promise(function (resolve, reject) {
+-                            readAsync(wasmBinaryFile, function (response) {
+-                                resolve(new Uint8Array(response));
+-                            }, reject);
+-                        });
+-                    }
+-                }
+-            }
++            // if (!wasmBinary && (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER)) {
++            //     if (typeof fetch === "function" && !isFileURI(wasmBinaryFile)) {
++            //         return fetch(wasmBinaryFile, {
++            //             credentials: "same-origin"
++            //         }).then(function (response) {
++            //             if (!response["ok"]) {
++            //                 throw "failed to load wasm binary file at '" + wasmBinaryFile + "'";
++            //             }
++            //             return response["arrayBuffer"]();
++            //         }).catch(function () {
++            //             return getBinary(wasmBinaryFile);
++            //         });
++            //     }
++            //     else {
++            //         if (readAsync) {
++            //             return new Promise(function (resolve, reject) {
++            //                 readAsync(wasmBinaryFile, function (response) {
++            //                     resolve(new Uint8Array(response));
++            //                 }, reject);
++            //             });
++            //         }
++            //     }
++            // }
+             return Promise.resolve().then(function () {
+                 return getBinary(wasmBinaryFile);
+             });
