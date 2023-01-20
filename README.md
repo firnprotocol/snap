@@ -55,7 +55,7 @@ console.log(`User's Firn balance is ${(balance / 1000).toFixed(3)} ETH.`);
 
 ### Transact
 
-The `transact` method prompts the user to anonymously execute a prescribed `unsignedTx` anonymously, on behalf of his
+The `transact` method prompts the user to anonymously execute a prescribed `unsignedTx`, on behalf of his
 Firn account. It will either return the `transactionReceipt` of the resulting successful, _mined_ transaction, or else will throw
 an error. Here's an example invocation:
 
