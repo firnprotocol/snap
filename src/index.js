@@ -32,17 +32,14 @@ const WITHDRAWAL_CALLDATA_SIZE = ethers.BigNumber.from(3076);
 export const onRpcRequest = async ({ origin, request }) => {
   switch (request.method) {
     case "initialize": {
-      const accounts = await wallet.request({
-        method: "eth_requestAccounts",
-      });
-      const chainId = await wallet.request({
-        method: "eth_chainId"
-      });
-      if (!Object.values(CHAIN_ID).includes(Number(chainId)))
-        throw new Error(`The chain ID "${Number(chainId)}" is not supported by Firn.`);
+      const provider = new ethers.providers.Web3Provider(wallet);
+      const accounts = await provider.listAccounts();
+      const { chainId } = await provider.getNetwork();
+      if (!Object.values(CHAIN_ID).includes(chainId))
+        throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
       const signature = await wallet.request({
         method: "personal_sign",
-        params: [accounts[0], CHAIN_PARAMS[Number(chainId)].message],
+        params: [accounts[0], CHAIN_PARAMS[chainId].message],
       });
       const plaintext = ethers.utils.keccak256(signature);
       await wallet.request({
@@ -59,17 +56,15 @@ export const onRpcRequest = async ({ origin, request }) => {
       if (state === null)
         throw new Error("User hasn't logged into Firn yet.");
       const plaintext = state.plaintext;
-      const chainId = await wallet.request({
-        method: "eth_chainId"
-      });
-      if (!Object.values(CHAIN_ID).includes(Number(chainId)))
-        throw new Error(`The chain ID "${Number(chainId)}" is not supported by Firn.`);
+      const provider = new ethers.providers.Web3Provider(wallet);
+      const { chainId } = await provider.getNetwork();
+      if (!Object.values(CHAIN_ID).includes(chainId))
+        throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
       // do a bunch of other stuff...
       await promise;
       const secret = new mcl.Fr();
       secret.setBigEndianMod(ethers.utils.arrayify(plaintext));
-      const provider = new ethers.providers.Web3Provider(wallet);
-      const firnContract = new ethers.Contract(ADDRESSES[Number(chainId)]["PROXY"], FIRN_ABI, provider);
+      const firnContract = new ethers.Contract(ADDRESSES[chainId]["PROXY"], FIRN_ABI, provider);
       const client = new Client({ secret, firnContract });
       await client.initialize(provider);
       const balance = client.state.available + client.state.pending;
@@ -80,7 +75,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           description: `${origin} wants to know your Firn account's balance. Please determine whether you want to share this information.`,
           textAreaContent: JSON.stringify({
             balance: `${(balance / 1000).toFixed(3)} ETH`,
-            chainId: Number(chainId),
+            chainId: chainId,
           }, null, " "),
         }],
         // todo: potentially try to do an etherscan lookup and decode the data...
@@ -96,11 +91,10 @@ export const onRpcRequest = async ({ origin, request }) => {
       if (state === null)
         throw new Error("User hasn't logged into Firn yet.");
       const plaintext = state.plaintext;
-      const chainId = await wallet.request({
-        method: "eth_chainId"
-      });
-      if (!Object.values(CHAIN_ID).includes(Number(chainId)))
-        throw new Error(`The chain ID "${Number(chainId)}" is not supported by Firn.`);
+      const provider = new ethers.providers.Web3Provider(wallet);
+      const { chainId } = await provider.getNetwork();
+      if (!Object.values(CHAIN_ID).includes(chainId))
+        throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
       const unsignedTx = { ...request.params };
       if (!ethers.utils.isAddress(unsignedTx.to))
         throw new Error("Input transaction's \"to\" field is not a valid Ethereum address.");
@@ -118,9 +112,8 @@ export const onRpcRequest = async ({ origin, request }) => {
       await promise;
       const secret = new mcl.Fr();
       secret.setBigEndianMod(ethers.utils.arrayify(plaintext));
-      const provider = new ethers.providers.Web3Provider(wallet);
-      const firnContract = new ethers.Contract(ADDRESSES[Number(chainId)]["PROXY"], FIRN_ABI, provider);
-      const readerContract = new ethers.Contract(ADDRESSES[Number(chainId)]["READER"], READER_ABI, provider);
+      const firnContract = new ethers.Contract(ADDRESSES[chainId]["PROXY"], FIRN_ABI, provider);
+      const readerContract = new ethers.Contract(ADDRESSES[chainId]["READER"], READER_ABI, provider);
       const client = new Client({ secret, firnContract, readerContract });
       await client.initialize(provider);
 
@@ -188,7 +181,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       const body = { Y, C, D, u, epoch, tip, proof, destination: unsignedTx.to, data: unsignedTx.data, amount };
       try {
         const transactionReceipt = await Promise.race([ // could be an event..
-          relay.fetch(`withdrawal${Number(chainId)}`, body).then((json) => {
+          relay.fetch(`withdrawal${chainId}`, body).then((json) => {
             console.log(json.hash);
             return Promise.race([
               provider.waitForTransaction(json.hash),
