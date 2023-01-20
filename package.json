@@ -1,7 +1,6 @@
 {
   "name": "@firnprotocol/snap",
   "version": "0.0.1",
-  "private": true,
   "description": "Firn Protocol's official MetaMask Snap.",
   "repository": {
     "type": "git",
