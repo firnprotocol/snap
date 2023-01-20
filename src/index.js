@@ -146,10 +146,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       const max = Math.max(0, Math.ceil((balance - tip) * FEE / (FEE + 1)) - ((balance - tip + 1) % (FEE + 1) === 0 ? 1 : 0));
       // note: right now, don't bother checking pending. we're assuming that they have 0 pending balance, or more generally
       // that their pending balance won't make or break
-      if (balance < amount + fee + tip) throw new Error(`Insufficient balance for transaction. The requested withdrawal amount of ${(amount / 1000).toFixed(3)} ETH,
-        together with the withdrawal fee of ${(fee / 1000).toFixed(3)} ETH and gas costs of ${(tip / 1000).toFixed(3)} ETH,
-        for a total of ${((amount + fee + tip) / 1000).toFixed(3)} ETH, exceeds the user's current balance of ${(balance / 1000).toFixed(3)} ETH.
-        The maximum currently withdrawable amount is ${(max / 1000).toFixed(3)} ETH.`);
+      if (balance < amount + fee + tip) throw new Error(`Insufficient balance for transaction. The requested withdrawal amount of ${(amount / 1000).toFixed(3)} ETH, together with the withdrawal fee of ${(fee / 1000).toFixed(3)} ETH and gas costs of ${(tip / 1000).toFixed(3)} ETH, for a total of ${((amount + fee + tip) / 1000).toFixed(3)} ETH, exceeds the user's current balance of ${(balance / 1000).toFixed(3)} ETH. The maximum currently withdrawable amount is ${(max / 1000).toFixed(3)} ETH.`);
 
       const approved = await wallet.request({
         method: "snap_confirm",
