@@ -1,6 +1,6 @@
 {
   "name": "@firnprotocol/snap",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Firn Protocol's official MetaMask Snap.",
   "repository": {
     "type": "git",
@@ -39,6 +39,6 @@
   "bugs": {
     "url": "https://github.com/firnprotocol/snap/issues"
   },
-  "homepage": "https://github.com/firnprotocol/snap#readme",
+  "homepage": "https://github.com/firnprotocol/example#readme",
   "license": "ISC"
 }
