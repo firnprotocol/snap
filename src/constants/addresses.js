@@ -11,7 +11,7 @@ export const ADDRESSES = {
   },
   [CHAIN_ID.OPTIMISM]: {
     BASE: "0x289C6F0a48461d6247b179cf99794C939B1cB3fE", // only used for optimism.
-    PROXY: "0xddfFdf3B0FF6D9D85135c5041bdE61D03FeE04A3", // not "really" a proxy, but we'll treat it as such.
+    PROXY: "0x3C6c27072356016F05a4736FaaBA91d3c2b26E90",
     READER: "0x1A23c286038B036C6bCF25b563fb3d427D0a3274",
   },
   [CHAIN_ID.ARBITRUM]: {
