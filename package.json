@@ -25,8 +25,9 @@
   "devDependencies": {
     "@lavamoat/allow-scripts": "^2.0.3",
     "@metamask/auto-changelog": "^2.6.0",
-    "@metamask/snap-types": "^0.22.0",
-    "@metamask/snaps-cli": "^0.22.0",
+    "@metamask/snaps-cli": "^0.30.0",
+    "@metamask/snaps-types": "^0.30.0",
+    "@metamask/snaps-ui": "^0.30.0",
     "patch-package": "^6.5.1",
     "postinstall-postinstall": "^2.1.0",
     "uglifyify": "^5.0.2"
