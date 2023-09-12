@@ -19,16 +19,16 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
-    "ethers": "^5.7.2",
-    "mcl-wasm": "1.0.3"
+    "mcl-wasm": "^1.4.0",
+    "viem": "^1.10.0"
   },
   "devDependencies": {
     "@lavamoat/allow-scripts": "^2.0.3",
     "@metamask/auto-changelog": "^2.6.0",
-    "@metamask/snaps-cli": "^0.30.0",
-    "@metamask/snaps-types": "^0.30.0",
-    "@metamask/snaps-ui": "^0.30.0",
-    "patch-package": "^6.5.1",
+    "@metamask/snaps-cli": "^0.38.3-flask.1",
+    "@metamask/snaps-types": "^0.38.2-flask.1",
+    "@metamask/snaps-ui": "^0.37.4-flask.1",
+    "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0",
     "uglifyify": "^5.0.2"
   },

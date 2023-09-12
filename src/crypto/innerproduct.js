@@ -1,5 +1,5 @@
 import * as mcl from "mcl-wasm";
-import { ethers } from "ethers";
+import { encodeAbiParameters, keccak256, toBytes, toHex } from "viem";
 
 import { BN128 } from "./bn128";
 import { PedersenVectorCommitment } from "./algebra";
@@ -13,8 +13,8 @@ export class InnerProductProof {
     this.R.forEach((r) => {
       result += BN128.toCompressed(r).slice(2);
     });
-    result += ethers.utils.hexlify(this.a.serialize().reverse()).slice(2);
-    result += ethers.utils.hexlify(this.b.serialize().reverse()).slice(2);
+    result += toHex(this.a.serialize().reverse()).slice(2);
+    result += toHex(this.b.serialize().reverse()).slice(2);
     return result;
   }
 
@@ -48,12 +48,12 @@ export class InnerProductProof {
       result.R.push(R);
 
       const x = new mcl.Fr();
-      x.setBigEndianMod(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
-        "bytes32",
-        "bytes32[2]",
-        "bytes32[2]",
+      x.setBigEndianMod(toBytes(keccak256(encodeAbiParameters([
+        { name: "", type: "bytes32" },
+        { name: "", type: "bytes32[2]" },
+        { name: "", type: "bytes32[2]" },
       ], [
-        ethers.utils.hexlify(previousChallenge.serialize().reverse()),
+        toHex(previousChallenge.serialize().reverse()),
         BN128.toETH(L),
         BN128.toETH(R),
       ]))));

@@ -1,5 +1,6 @@
-import { ethers } from "ethers";
 import * as mcl from "mcl-wasm";
+import { keccak256 } from 'viem';
+import { encodePacked } from 'viem';
 
 import { BN128 } from "./bn128";
 
@@ -260,9 +261,9 @@ export function recursivePolynomials(list, a, b) {
 
 export const promise = BN128.promise.then(() => {
   PedersenCommitment.base.g = BN128.BASE;
-  PedersenCommitment.base.h = BN128.mapInto(ethers.utils.id("h"));
-  PedersenVectorCommitment.base.gs = new PointVector(Array.from({ length: M << 1 }).map((_, i) => BN128.mapInto(ethers.utils.solidityKeccak256(["string", "uint256"], ["g", i]))));
-  PedersenVectorCommitment.base.hs = new PointVector(Array.from({ length: M << 1 }).map((_, i) => BN128.mapInto(ethers.utils.solidityKeccak256(["string", "uint256"], ["h", i]))));
-  PedersenVectorCommitment.base.h = BN128.mapInto(ethers.utils.id("h"));
+  PedersenCommitment.base.h = BN128.mapInto(keccak256("h"));
+  PedersenVectorCommitment.base.gs = new PointVector(Array.from({ length: M << 1 }).map((_, i) => BN128.mapInto(keccak256(encodePacked(["string", "uint256"], ["g", i])))));
+  PedersenVectorCommitment.base.hs = new PointVector(Array.from({ length: M << 1 }).map((_, i) => BN128.mapInto(keccak256(encodePacked(["string", "uint256"], ["h", i])))));
+  PedersenVectorCommitment.base.h = BN128.mapInto(keccak256("h"));
   ElGamal.base.g = PedersenCommitment.base.g;
 });

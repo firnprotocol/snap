@@ -1,17 +1,23 @@
+import { arbitrum, mainnet, optimism, base } from "viem/chains";
+
 export const CHAIN_ID = {
-  ETHEREUM: 1,
-  OPTIMISM: 10,
-  ARBITRUM: 42161,
+  "0x1": "Ethereum",
+  "0xa": "OP Mainnet",
+  "0xa4b1": "Arbitrum One",
+  "0x2105": "Base"
 };
 
 export const CHAIN_PARAMS = {
-  [CHAIN_ID.ETHEREUM]: {
-    message: "Log into your Firn account on mainnet Ethereum.",
+  "Ethereum": {
+    chain: mainnet,
   },
-  [CHAIN_ID.OPTIMISM]: {
-    message: "This message will log you into your Firn account.", // inconsistent...!
+  "OP Mainnet": {
+    chain: optimism,
   },
-  [CHAIN_ID.ARBITRUM]: {
-    message: "Log into your Firn account on Arbitrum One.",
+  "Arbitrum One": {
+    chain: arbitrum,
   },
+  "Base": {
+    chain: base,
+  }
 };

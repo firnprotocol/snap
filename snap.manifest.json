@@ -7,7 +7,7 @@
     "url": "https://github.com/firnprotocol/snap.git"
   },
   "source": {
-    "shasum": "MSbLCnqhvX6WfZtKOZlPXbmAQjnlr/vZbIybnKT04Hg=",
+    "shasum": "ZNW+uh2VFlJ8IkevNCg9bhBfjq10QkHx/53G9BR6UWU=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -18,10 +18,14 @@
     }
   },
   "initialPermissions": {
-    "snap_confirm": {},
-    "eth_accounts": {},
+    "snap_dialog": {},
     "snap_manageState": {},
-    "endowment:network-access": {}
+    "endowment:rpc": {
+      "dapps": true,
+      "snaps": false
+    },
+    "endowment:network-access": {},
+    "endowment:ethereum-provider": {}
   },
   "manifestVersion": "0.1"
 }

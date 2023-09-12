@@ -1,5 +1,5 @@
 import * as mcl from "mcl-wasm";
-import { ethers } from "ethers";
+import { encodeAbiParameters, keccak256, toBytes, toHex } from "viem";
 
 import { BN128 } from "./bn128";
 import {
@@ -41,21 +41,21 @@ export class WithdrawalProof {
       result += BN128.toCompressed(C_XG_k.right).slice(2);
     });
     this.f.vector.forEach((f_k) => {
-      result += ethers.utils.hexlify(f_k.serialize().reverse()).slice(2);
+      result += toHex(f_k.serialize().reverse()).slice(2);
     });
 
-    result += ethers.utils.hexlify(this.z_A.serialize().reverse()).slice(2);
+    result += toHex(this.z_A.serialize().reverse()).slice(2);
 
     result += BN128.toCompressed(this.T_1.point).slice(2);
     result += BN128.toCompressed(this.T_2.point).slice(2);
-    result += ethers.utils.hexlify(this.tHat.serialize().reverse()).slice(2);
-    result += ethers.utils.hexlify(this.mu.serialize().reverse()).slice(2);
+    result += toHex(this.tHat.serialize().reverse()).slice(2);
+    result += toHex(this.mu.serialize().reverse()).slice(2);
 
-    result += ethers.utils.hexlify(this.c.serialize().reverse()).slice(2);
-    result += ethers.utils.hexlify(this.s_sk.serialize().reverse()).slice(2);
-    result += ethers.utils.hexlify(this.s_r.serialize().reverse()).slice(2);
-    result += ethers.utils.hexlify(this.s_b.serialize().reverse()).slice(2);
-    result += ethers.utils.hexlify(this.s_tau.serialize().reverse()).slice(2);
+    result += toHex(this.c.serialize().reverse()).slice(2);
+    result += toHex(this.s_sk.serialize().reverse()).slice(2);
+    result += toHex(this.s_r.serialize().reverse()).slice(2);
+    result += toHex(this.s_b.serialize().reverse()).slice(2);
+    result += toHex(this.s_tau.serialize().reverse()).slice(2);
 
     result += this.ipProof.serialize().slice(2);
 
@@ -91,29 +91,29 @@ export class WithdrawalProof {
     result.A = PedersenVectorCommitment.commit(a, d); // warning: semantic change for contract
     result.B = PedersenVectorCommitment.commit(b, c); // warning: semantic change for contract
 
-    const salt = ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
-      "address",
-      "bytes",
+    const salt = keccak256(encodeAbiParameters([
+      { name: "", type: "address" },
+      { name: "", type: "bytes" },
     ], [
       destination,
       data,
     ])); // NOT modding, here or in the contract...!
 
     const v = new mcl.Fr();
-    v.setBigEndianMod(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
-      "uint256",
-      "uint256",
-      "bytes32[2][" + N + "]",
-      "bytes32[2][" + N + "]",
-      "bytes32[2][" + N + "]",
-      "bytes32[2][" + N + "]",
-      "bytes32[2]",
-      "uint256",
-      "uint256",
-      "bytes32[2]",
-      "bytes32[2]",
-      "bytes32[2]",
-      "bytes32[2]",
+    v.setBigEndianMod(toBytes(keccak256(encodeAbiParameters([
+      { name: "", type: "uint256" },
+      { name: "", type: "uint256" },
+      { name: "", type: "bytes32[2][" + N + "]" },
+      { name: "", type: "bytes32[2][" + N + "]" },
+      { name: "", type: "bytes32[2][" + N + "]" },
+      { name: "", type: "bytes32[2][" + N + "]" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "uint256" },
+      { name: "", type: "uint256" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
     ], [
       salt,
       bTransfer,
@@ -159,16 +159,16 @@ export class WithdrawalProof {
     });
 
     const w = new mcl.Fr();
-    w.setBigEndianMod(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
-      "bytes32",
-      "bytes32[2][" + n + "]",
-      "bytes32[2][" + n + "]",
-      "bytes32[2][" + n + "]",
-      "bytes32[2][" + n + "]",
-      "bytes32[2][" + n + "]",
-      "bytes32[2][" + n + "]",
+    w.setBigEndianMod(toBytes(keccak256(encodeAbiParameters([
+      { name: "", type: "bytes32" },
+      { name: "", type: "bytes32[2][" + n + "]" },
+      { name: "", type: "bytes32[2][" + n + "]" },
+      { name: "", type: "bytes32[2][" + n + "]" },
+      { name: "", type: "bytes32[2][" + n + "]" },
+      { name: "", type: "bytes32[2][" + n + "]" },
+      { name: "", type: "bytes32[2][" + n + "]" },
     ], [
-      ethers.utils.hexlify(v.serialize().reverse()),
+      toHex(v.serialize().reverse()),
       result.CnG.map((CnG_k) => BN128.toETH(CnG_k.left)),
       result.CnG.map((CnG_k) => BN128.toETH(CnG_k.right)),
       result.y_0G.map((y_0G_k) => BN128.toETH(y_0G_k.left)),
@@ -181,18 +181,14 @@ export class WithdrawalProof {
     result.z_A = mcl.add(result.A.randomness, mcl.mul(result.B.randomness, w));
 
     const y = new mcl.Fr();
-    y.setBigEndianMod(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
-      "bytes32",
-    ], [
-      ethers.utils.hexlify(w.serialize().reverse()), // this might be equivalent to just hashing it....?!?!?
-    ]))));
+    y.setBigEndianMod(toBytes(keccak256(toHex(w.serialize().reverse()))));
 
     const ys = new FieldVector([BN128.ONE]);
     for (let i = 1; i < M; i++) { // it would be nice to have a nifty functional way of doing this.
       ys.push(mcl.mul(ys.vector[i - 1], y));
     }
     const z = new mcl.Fr();
-    z.setBigEndianMod(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.hexlify(y.serialize().reverse()))));
+    z.setBigEndianMod(toBytes(keccak256(toHex(y.serialize().reverse()))));
     const zs = [mcl.sqr(z)];
     const twos = [];
     for (let i = 0; i < M; i++) {
@@ -208,12 +204,12 @@ export class WithdrawalProof {
     result.T_2 = PedersenCommitment.commit(tPolyCoefficients[2]);
 
     const x = new mcl.Fr();
-    x.setBigEndianMod(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
-      "bytes32",
-      "bytes32[2]",
-      "bytes32[2]",
+    x.setBigEndianMod(toBytes(keccak256(encodeAbiParameters([
+      { name: "", type: "bytes32" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
     ], [
-      ethers.utils.hexlify(z.serialize().reverse()),
+      toHex(z.serialize().reverse()),
       BN128.toETH(result.T_1.point),
       BN128.toETH(result.T_2.point),
     ]))));
@@ -254,16 +250,16 @@ export class WithdrawalProof {
     const A_u = mcl.mul(BN128.gEpoch(epoch), k_sk);
 
     result.c = new mcl.Fr();
-    result.c.setBigEndianMod(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
-      "bytes32",
-      "bytes32[2]",
-      "bytes32[2]",
-      "bytes32[2]",
-      "bytes32[2]",
-      "bytes32[2]",
-      "bytes32[2]",
+    result.c.setBigEndianMod(toBytes(keccak256(encodeAbiParameters([
+      { name: "", type: "bytes32" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
+      { name: "", type: "bytes32[2]" },
     ], [
-      ethers.utils.hexlify(x.serialize().reverse()),
+      toHex(x.serialize().reverse()),
       BN128.toETH(A_y),
       BN128.toETH(A_D),
       BN128.toETH(A_b),
@@ -282,11 +278,8 @@ export class WithdrawalProof {
     const hsOld = PedersenVectorCommitment.base.hs;
 
     const o = new mcl.Fr();
-    o.setBigEndianMod(ethers.utils.arrayify(ethers.utils.keccak256(ethers.utils.defaultAbiCoder.encode([
-      "bytes32",
-    ], [
-      ethers.utils.hexlify(result.c.serialize().reverse()),
-    ]))));
+    o.setBigEndianMod(toBytes(keccak256(toHex(result.c.serialize().reverse()))));
+
     PedersenVectorCommitment.base.h = mcl.mul(PedersenVectorCommitment.base.h, o);
     PedersenVectorCommitment.base.gs = PedersenVectorCommitment.base.gs.slice(0, 32); // horrible hack, but works.
     PedersenVectorCommitment.base.hs = PedersenVectorCommitment.base.hs.slice(0, 32).hadamard(ys.invert());
