@@ -35,23 +35,23 @@ export const onRpcRequest = async ({ origin, request }) => {
       const state = await snap.request({
         method: "snap_manageState",
         params: {
-          operation: 'get'
+          operation: "get"
         }
       });
       if (state !== null) return;  // they're already logged in.
       const [address] = await ethereum.request({
-        method: 'eth_requestAccounts'
+        method: "eth_requestAccounts"
       });
       const signature = await ethereum.request({
-        method: 'personal_sign',
+        method: "personal_sign",
         params: ["This message will log you into your Firn account.", address],
       });
       const plaintext = keccak256(signature);
       await snap.request({
-        method: 'snap_manageState',
+        method: "snap_manageState",
         params: {
           newState: { plaintext },
-          operation: 'update'
+          operation: "update"
         }
       }); // return nothing for now
       return;
@@ -60,38 +60,54 @@ export const onRpcRequest = async ({ origin, request }) => {
       const state = await snap.request({
         method: "snap_manageState",
         params: {
-          operation: 'get'
+          operation: "get"
         }
       });
       if (state === null)
         throw new Error("User hasn't logged into Firn yet.");
       const plaintext = state.plaintext;
       const chainId = await ethereum.request({
-        method: 'eth_chainId',
+        method: "eth_chainId",
       });
       if (!Object.keys(CHAIN_ID).includes(chainId))
         throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
       const name = CHAIN_ID[chainId];
       const publicClient = createPublicClient({
         chain: CHAIN_PARAMS[name].chain, // ???
-        transport: custom(ethereum)
+        transport: custom(ethereum),
       });
       // do a bunch of other stuff...
       await promise;
       const secret = new mcl.Fr();
       secret.setBigEndianMod(toBytes(plaintext));
-      const pub = BN128.toCompressed(mcl.mul(BN128.BASE, secret));
-      const contract = getContract({
-        address: ADDRESSES[name].PROXY,
-        abi: FIRN_ABI,
-        publicClient,
-      });
-      const block = await publicClient.getBlock()
+      // const contract = getContract({
+      //   address: ADDRESSES[name].PROXY,
+      //   abi: FIRN_ABI,
+      //   publicClient,
+      // });
+      const block = await publicClient.getBlock();
       const epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
       const client = new Client({ secret, nextEpoch });
-      const present = await contract.read.simulateAccounts([[pub], epoch]);
-      const future = await contract.read.simulateAccounts([[pub], epoch + 1]); // hanging here
-      await client.initialize(block, present, future);
+      const result = await publicClient.multicall({
+        contracts: [
+          {
+            address: ADDRESSES[name].PROXY,
+            abi: FIRN_ABI,
+            functionName: "simulateAccounts",
+            args: [[client.pub], epoch],
+          },
+          {
+            address: ADDRESSES[name].PROXY,
+            abi: FIRN_ABI,
+            functionName: "simulateAccounts",
+            args: [[client.pub], epoch + 1],
+          },
+        ]
+      });
+      // const present = await contract.read.simulateAccounts([[client.pub], epoch]);
+      // const future = await contract.read.simulateAccounts([[client.pub], epoch + 1]); // hanging here
+      return JSON.stringify(result);
+      await client.initialize(block, present.result, future.result);
       const balance = client.state.available + client.state.pending;
       const approved = await snap.request({
         method: "snap_dialog",
