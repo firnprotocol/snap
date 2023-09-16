@@ -1,15 +1,15 @@
 import * as mcl from "mcl-wasm";
 import { panel, text, heading } from "@metamask/snaps-ui";
-import { createWalletClient, custom, getContract, keccak256, toBytes } from "viem";
+import { createPublicClient, custom, getContract, keccak256, toBytes } from "viem";
 
 
 import { CHAIN_ID, CHAIN_PARAMS } from "./constants/networks.js";
 import { ADDRESSES } from "./constants/addresses";
 import { FIRN_ABI } from "./constants/abis";
-import { BN_SNARK1 } from "mcl-wasm";
-// import { BN128 } from "./crypto/bn128";
-// import { promise } from "./crypto/algebra";
-// import { Client, EPOCH_LENGTH } from "./crypto/client";
+import { BN128 } from "./crypto/bn128";
+import { promise } from "./crypto/algebra";
+import { Client, EPOCH_LENGTH } from "./crypto/client";
+import { nextEpoch } from "./utils/nextEpoch";
 
 // const FEE = 256;
 // const WITHDRAWAL_GAS = 3800000n;
@@ -57,7 +57,6 @@ export const onRpcRequest = async ({ origin, request }) => {
       return;
     }
     case "requestBalance": {
-      await mcl.init(mcl.BN_SNARK1)
       const state = await snap.request({
         method: "snap_manageState",
         params: {
@@ -67,38 +66,33 @@ export const onRpcRequest = async ({ origin, request }) => {
       if (state === null)
         throw new Error("User hasn't logged into Firn yet.");
       const plaintext = state.plaintext;
-      const [address] = await ethereum.request({
-        method: 'eth_requestAccounts'
-      });
       const chainId = await ethereum.request({
         method: 'eth_chainId',
       });
       if (!Object.keys(CHAIN_ID).includes(chainId))
         throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
       const name = CHAIN_ID[chainId];
-      const walletClient = createWalletClient({
-        account: address,
+      const publicClient = createPublicClient({
         chain: CHAIN_PARAMS[name].chain, // ???
         transport: custom(ethereum)
       });
       // do a bunch of other stuff...
-      // await promise;
-      // const secret = new mcl.Fr();
-      // secret.setBigEndianMod(toBytes(plaintext));
-      // const pub = BN128.toCompressed(mcl.mul(BN128.BASE, secret));
-      // const contract = getContract({
-      //   address: ADDRESSES[name].PROXY,
-      //   abi: FIRN_ABI,
-      //   walletClient,
-      // });
-      // const nextEpoch = (block) => Promise.resolve(block);
-      // const block = walletClient.getBlock()
-      // const epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
-      // const client = new Client({ secret, nextEpoch });
-      // const present = await contract.read.simulateAccounts([[pub], epoch]);
-      // const future = await contract.read.simulateAccounts([[pub], epoch + 1]);
-      // await client.initialize(block, present, future);
-      const balance = 123; // client.state.available + client.state.pending;
+      await promise;
+      const secret = new mcl.Fr();
+      secret.setBigEndianMod(toBytes(plaintext));
+      const pub = BN128.toCompressed(mcl.mul(BN128.BASE, secret));
+      const contract = getContract({
+        address: ADDRESSES[name].PROXY,
+        abi: FIRN_ABI,
+        publicClient,
+      });
+      const block = await publicClient.getBlock()
+      const epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
+      const client = new Client({ secret, nextEpoch });
+      const present = await contract.read.simulateAccounts([[pub], epoch]);
+      const future = await contract.read.simulateAccounts([[pub], epoch + 1]); // hanging here
+      await client.initialize(block, present, future);
+      const balance = client.state.available + client.state.pending;
       const approved = await snap.request({
         method: "snap_dialog",
         params: {

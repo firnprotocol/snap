@@ -1,15 +1,16 @@
-const EPOCH_LENGTH = 60;
+import { EPOCH_LENGTH } from "../crypto/client";
 
-export async function nextEpoch(provider, block) {
-  const epoch = Math.floor(block.timestamp / EPOCH_LENGTH);
+
+export function nextEpoch(publicClient, block) {
+  const epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
   return new Promise((resolve) => {
-    const listener = async (blockNumber) => {
-      const block = await provider.getBlock(blockNumber); // would prob be equivalent to do "latest"?
-      if (Math.floor(block.timestamp / EPOCH_LENGTH) > epoch) {
-        provider.off("block", listener);
-        resolve(block);
+    const unwatch = publicClient.watchBlocks({
+      onBlock: (block) => {
+        if (Math.floor(Number(block.timestamp) / EPOCH_LENGTH) > epoch) {
+          unwatch();
+          resolve(block);
+        }
       }
-    };
-    provider.on("block", listener);
+    });
   });
 }

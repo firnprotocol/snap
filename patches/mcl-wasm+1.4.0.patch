@@ -1,0 +1,23 @@
+diff --git a/node_modules/mcl-wasm/dist/mcl_c.js b/node_modules/mcl-wasm/dist/mcl_c.js
+index b641ac6..9757915 100644
+--- a/node_modules/mcl-wasm/dist/mcl_c.js
++++ b/node_modules/mcl-wasm/dist/mcl_c.js
+@@ -81,12 +81,12 @@ var Module = (() => {
+             else if (typeof document != "undefined" && document.currentScript) {
+                 scriptDirectory = document.currentScript.src;
+             }
+-            if (_scriptDir) {
+-                scriptDirectory = _scriptDir;
+-            }
+-            if (scriptDirectory.indexOf("blob:") !== 0) {
+-                scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf("/") + 1);
+-            }
++            // if (_scriptDir) {
++            //     scriptDirectory = _scriptDir;
++            // }
++            // if (scriptDirectory.indexOf("blob:") !== 0) {
++            //     scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf("/") + 1);
++            // }
+             else {
+                 scriptDirectory = "";
+             }
