@@ -28,13 +28,12 @@ export class Client {
     this.nextEpoch = nextEpoch
   }
 
-  async initialize(block, present, future) { // params won't be retained.
+  async initialize(publicClient, block, present, future) { // params won't be retained.
     this.blockNumber = block.blockNumber; // slightly after `present` and `future` were fetched?
     this.state.available += this.readBalance(present);
     this.state.pending += this.readBalance(future.sub(present));
     // +=, not equal, in case that reading takes long, and we receive funds in the mean time (possibly with a rollover).
-    this.state.update(); // could go elsewhere (i.e. above one frame) but doesn't really matter
-    this.nextEpoch(block).then((block) => {
+    this.nextEpoch(publicClient, block).then((block) => {
       this.state.rollOver();
     });
   }

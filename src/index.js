@@ -1,13 +1,12 @@
 import * as mcl from "mcl-wasm";
 import { panel, text, heading } from "@metamask/snaps-ui";
-import { createPublicClient, custom, getContract, keccak256, toBytes } from "viem";
+import { createPublicClient, http, keccak256, toBytes } from "viem";
 
 
 import { CHAIN_ID, CHAIN_PARAMS } from "./constants/networks.js";
 import { ADDRESSES } from "./constants/addresses";
 import { FIRN_ABI } from "./constants/abis";
-import { BN128 } from "./crypto/bn128";
-import { promise } from "./crypto/algebra";
+import { ElGamal, promise } from "./crypto/algebra";
 import { Client, EPOCH_LENGTH } from "./crypto/client";
 import { nextEpoch } from "./utils/nextEpoch";
 
@@ -74,17 +73,12 @@ export const onRpcRequest = async ({ origin, request }) => {
       const name = CHAIN_ID[chainId];
       const publicClient = createPublicClient({
         chain: CHAIN_PARAMS[name].chain, // ???
-        transport: custom(ethereum),
+        transport: http(), // custom(ethereum),
       });
       // do a bunch of other stuff...
       await promise;
       const secret = new mcl.Fr();
       secret.setBigEndianMod(toBytes(plaintext));
-      // const contract = getContract({
-      //   address: ADDRESSES[name].PROXY,
-      //   abi: FIRN_ABI,
-      //   publicClient,
-      // });
       const block = await publicClient.getBlock();
       const epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
       const client = new Client({ secret, nextEpoch });
@@ -104,10 +98,9 @@ export const onRpcRequest = async ({ origin, request }) => {
           },
         ]
       });
-      // const present = await contract.read.simulateAccounts([[client.pub], epoch]);
-      // const future = await contract.read.simulateAccounts([[client.pub], epoch + 1]); // hanging here
-      return JSON.stringify(result);
-      await client.initialize(block, present.result, future.result);
+      const present = ElGamal.deserialize(result[0].result[0]);
+      const future = ElGamal.deserialize(result[1].result[0]);
+      await client.initialize(publicClient, block, present, future);
       const balance = client.state.available + client.state.pending;
       const approved = await snap.request({
         method: "snap_dialog",
