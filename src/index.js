@@ -1,6 +1,6 @@
 import * as mcl from "mcl-wasm";
 import { panel, text, heading } from "@metamask/snaps-ui";
-import { createPublicClient, http, keccak256, toBytes } from "viem";
+import { createPublicClient, getContract, http, keccak256, toBytes } from "viem";
 
 
 import { CHAIN_ID, CHAIN_PARAMS } from "./constants/networks.js";
@@ -8,7 +8,6 @@ import { ADDRESSES } from "./constants/addresses";
 import { FIRN_ABI } from "./constants/abis";
 import { ElGamal, promise } from "./crypto/algebra";
 import { Client, EPOCH_LENGTH } from "./crypto/client";
-import { nextEpoch } from "./utils/nextEpoch";
 
 // const FEE = 256;
 // const WITHDRAWAL_GAS = 3800000n;
@@ -65,6 +64,10 @@ export const onRpcRequest = async ({ origin, request }) => {
       if (state === null)
         throw new Error("User hasn't logged into Firn yet.");
       const plaintext = state.plaintext;
+      await promise;
+      const secret = new mcl.Fr();
+      secret.setBigEndianMod(toBytes(plaintext));
+
       const chainId = await ethereum.request({
         method: "eth_chainId",
       });
@@ -73,34 +76,21 @@ export const onRpcRequest = async ({ origin, request }) => {
       const name = CHAIN_ID[chainId];
       const publicClient = createPublicClient({
         chain: CHAIN_PARAMS[name].chain, // ???
-        transport: http(), // custom(ethereum),
+        transport: http('https://eth-mainnet.g.alchemy.com/v2/WM5ly1JW2TrWhk8byZfTt2cpRVTpRUnw'), // custom(ethereum)
       });
-      // do a bunch of other stuff...
-      await promise;
-      const secret = new mcl.Fr();
-      secret.setBigEndianMod(toBytes(plaintext));
+
       const block = await publicClient.getBlock();
       const epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
+      const nextEpoch = (publicClient, block) => Promise.resolve(block); // dummy
       const client = new Client({ secret, nextEpoch });
-      const result = await publicClient.multicall({
-        contracts: [
-          {
-            address: ADDRESSES[name].PROXY,
-            abi: FIRN_ABI,
-            functionName: "simulateAccounts",
-            args: [[client.pub], epoch],
-          },
-          {
-            address: ADDRESSES[name].PROXY,
-            abi: FIRN_ABI,
-            functionName: "simulateAccounts",
-            args: [[client.pub], epoch + 1],
-          },
-        ]
+      const contract = getContract({
+        address: ADDRESSES[name].PROXY,
+        abi: FIRN_ABI,
+        publicClient,
       });
-      const present = ElGamal.deserialize(result[0].result[0]);
-      const future = ElGamal.deserialize(result[1].result[0]);
-      await client.initialize(publicClient, block, present, future);
+      const result = await contract.read.simulateAccounts([[client.pub], epoch]);
+      const future = ElGamal.deserialize(result[0]);
+      await client.initialize(publicClient, block, future, future);
       const balance = client.state.available + client.state.pending;
       const approved = await snap.request({
         method: "snap_dialog",
