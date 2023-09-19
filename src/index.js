@@ -166,7 +166,6 @@ export const onRpcRequest = async ({ origin, request }) => {
       const present = ElGamal.deserialize(result[0].result[0]);
       const future = ElGamal.deserialize(result[1].result[0]);
       await client.initialize(publicClient, block, present, future);
-
       const calculators = {  // now imperative.....
         "Ethereum": async (l1Gas, maxPriorityFeePerGas) => {
           const feeHistory = await publicClient.getFeeHistory({
@@ -236,6 +235,7 @@ export const onRpcRequest = async ({ origin, request }) => {
             text(`**Destination Address:** ${recipient}.`),
             text(`**Value:** ${(amount / 1000).toFixed(3)} ETH.`),
             text(`**Data:** ${data}.`),
+            text(`Your fees, including gas, will be ${((fee + tip) / 1000).toFixed(3)} ETH.`),
             text(`Would you like to proceed with this transaction?`),
           ]),
         },
@@ -365,24 +365,23 @@ export const onRpcRequest = async ({ origin, request }) => {
         ]);
         return transactionReceipt.transactionHash;
       } catch (error) {
-          if (error.message === "Failed to fetch")
-            throw new Error("Failed to reach the Firn relay; please try again.");
-          else if (error.status === 0)
-            throw new Error("Your Firn transaction was mined, but reverted. This may be a timing issue.");
-          else if (error.statusText === "No response")
-            throw new Error("The relay hung while responding to the transaction, and the proof expired. This is probably a connectivity issue; please try again.");
-          else if (error.statusText === "Took too long")
-            throw new Error("The relay successfully broadcast the relevant transaction, but it was not mined in time, and has now expired. Please try again.");
-          else if (error.status === 500) {
-            if (error.statusText === "Tip too low")
-              throw new Error("The relay rejected the transaction's gas fee as excessively low. This can happen if gas prices fluctuate rapidly; please try again.");
-            else if (error.statusText === "Wrong epoch")
-              throw new Error("The relay refused to broadcast the transaction, citing a clock synchronization issue. Please try again.");
-            else
-              throw new Error("The relay refused to broadcast the transaction, citing an undisclosed issue. Please contact us directly to report this bug.");
-          } else
-            throw error; // pass on the misc error?! this is different from the front-end.
-        }
+        if (error.message === "Failed to fetch")
+          throw new Error("Failed to reach the Firn relay; please try again.");
+        else if (error.status === 0)
+          throw new Error("Your Firn transaction was mined, but reverted. This may be a timing issue.");
+        else if (error.statusText === "No response")
+          throw new Error("The relay hung while responding to the transaction, and the proof expired. This is probably a connectivity issue; please try again.");
+        else if (error.statusText === "Took too long")
+          throw new Error("The relay successfully broadcast the relevant transaction, but it was not mined in time, and has now expired. Please try again.");
+        else if (error.status === 500) {
+          if (error.statusText === "Tip too low")
+            throw new Error("The relay rejected the transaction's gas fee as excessively low. This can happen if gas prices fluctuate rapidly; please try again.");
+          else if (error.statusText === "Wrong epoch")
+            throw new Error("The relay refused to broadcast the transaction, citing a clock synchronization issue. Please try again.");
+          else
+            throw new Error("The relay refused to broadcast the transaction, citing an undisclosed issue. Please contact us directly to report this bug.");
+        } else
+          throw error; // pass on the misc error?! this is different from the front-end.
       }
     }
     default:

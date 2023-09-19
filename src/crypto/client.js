@@ -4,7 +4,7 @@ import { BN128 } from "./bn128";
 import { ElGamal, ElGamalVector, N, PointVector, } from "./algebra";
 import { WithdrawalProof } from "./withdrawal";
 import { ADDRESSES } from "../constants/addresses";
-import { READER_ABI } from "../constants/abis";
+import { FIRN_ABI, READER_ABI } from "../constants/abis";
 import { toHex } from "viem/utils";
 
 export const EPOCH_LENGTH = 60;
@@ -74,7 +74,7 @@ export class Client {
       index = random[0] & N - 1;
       anonset[index] = this.pub; // is this secure?
     }
-    const accounts = await readContract({
+    const accounts = await publicClient.readContract({
       address: ADDRESSES[name].PROXY,
       abi: FIRN_ABI,
       functionName: "simulateAccounts",
