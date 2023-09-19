@@ -1,11 +1,20 @@
 import * as mcl from "mcl-wasm";
 import { panel, text, heading } from "@metamask/snaps-ui";
-import { createPublicClient, http, formatUnits, getContract, keccak256, parseGwei, toBytes } from "viem";
+import {
+  createPublicClient,
+  http,
+  formatUnits,
+  getContract,
+  keccak256,
+  parseGwei,
+  toBytes,
+  encodeAbiParameters
+} from "viem";
 
 import { CHAIN_ID, CHAIN_PARAMS } from "./constants/networks.js";
 import { ADDRESSES } from "./constants/addresses";
-import { FIRN_ABI, READER_ABI, ORACLE_ABI, ARB_GAS_INFO_ABI } from "./constants/abis";
-import { ElGamal, promise } from "./crypto/algebra";
+import { FIRN_ABI, ORACLE_ABI, ARB_GAS_INFO_ABI } from "./constants/abis";
+import { ElGamal, N, promise } from "./crypto/algebra";
 import { Client, EPOCH_LENGTH } from "./crypto/client";
 import { nextEpoch } from "./utils/nextEpoch";
 import { optimismTxDataGas } from "./utils/gas";
@@ -138,16 +147,6 @@ export const onRpcRequest = async ({ origin, request }) => {
       let block = await publicClient.getBlock();
       let epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
       const client = new Client({ secret, nextEpoch });
-      // const contract = getContract({
-      //   address: ADDRESSES[name].PROXY,
-      //   abi: FIRN_ABI,
-      //   publicClient,
-      // });
-      // const reader = getContract({
-      //   address: ADDRESSES[name].READER,
-      //   abi: READER_ABI,
-      //   publicClient,
-      // });
       const result = await publicClient.multicall({
         contracts: [
           {
@@ -205,6 +204,7 @@ export const onRpcRequest = async ({ origin, request }) => {
 
       const amount = transaction.value; // value, amount, etc etc.
       const data = transaction.data; // assert isBytes(data);
+      const recipient = transaction.to; // assert isAddress(recipient)?
       const fee = Math.floor(amount / FEE);
       let gas = 0n;
       if (name === "Ethereum") {
@@ -233,7 +233,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           content: panel([
             heading("Transaction Approval Request"),
             text(`The site **${origin}** is proposing the following Firn transaction on your behalf.`),
-            text(`**Destination Address:** ${transaction.to}.`),
+            text(`**Destination Address:** ${recipient}.`),
             text(`**Value:** ${(amount / 1000).toFixed(3)} ETH.`),
             text(`**Data:** ${data}.`),
             text(`Would you like to proceed with this transaction?`),
@@ -243,100 +243,147 @@ export const onRpcRequest = async ({ origin, request }) => {
       if (!approved) throw new Error("Client rejected the transaction confirmation prompt.");
 
       const relay = new Relay();
-      block = await publicClient.getBlock();
+      block = await publicClient.getBlock(); // i guess get it again, in case they tarried.
       epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
-      //   // const away = (Math.floor(block.timestamp / EPOCH_LENGTH) + 1) * EPOCH_LENGTH - block.timestamp;
-      //   // crude attempt to determine how much time is left in the epoch. typically this will be an underestimate
-      //   // const delay = amount > client.state.available || away < 20;
-      //   // if (delay) {
-      //   //   block = await nextEpoch(provider, block);
-      //   //   epoch = Math.floor(block.timestamp / EPOCH_LENGTH);
-      //   // }
-      //   const nextBlock = nextEpoch(provider, block); // start counting; note that we don't await.
-      //   // const [Y, C, D, u, proof] = await client.withdraw(amount, epoch, tip + fee, unsignedTx.to, unsignedTx.data);
-      //   // const hash = ethers.utils.solidityKeccak256([`bytes32[${N}]`, `bytes32[${N}]`, "bytes32",], [Y, C, D,]);
-      //   // const body = { Y, C, D, u, epoch, tip, proof, destination: unsignedTx.to, data: unsignedTx.data, amount };
-      //   try {
-      //     const transactionReceipt = await Promise.race([ // could be an event..
-      //       relay.fetch(`withdrawal${chainId}`, {}).then((json) => {
-      //         console.log(json.hash);
-      //         return Promise.race([
-      //           provider.waitForTransaction(json.hash),
-      //           nextBlock.then((block) => {
-      //             // this guy handles the case where the relay _does_ respond with the tx hash, but then nobody mines it,
-      //             // and we sit around waiting until we're sure that the thing has expired....
-      //             return new Promise((resolve, reject) => {
-      //               setTimeout(() => {
-      //                 reject({
-      //                   statusText: "Took too long",
-      //                   hash: json.hash, // ...json
-      //                 });
-      //               }, 15000);
-      //             });
-      //           })
-      //         ]);
-      //       }).then((transactionReceipt) => {
-      //         if (transactionReceipt.status === 1) {
-      //           return transactionReceipt;
-      //         } else {
-      //           return nextBlock.then((block) => {
-      //             // this whole block is only for the extremely weird edge case where our thing got _certifiably_ reverted,
-      //             // but we wait around anyway, in case someone else mined it, but we haven't received word of that yet.
-      //             // warning: if `waitForTransaction` takes super-long, _and_ the thing fails (i.e., resolves with status === 0),
-      //             // then code won't flow over the below until _after_ `nextBlock` has resolved (i.e., could be > 5 seconds after).
-      //             // in this event, the below generic waiter could throw before this one does, even when our thing got reverted.
-      //             return new Promise((resolve, reject) => {
-      //               setTimeout(() => {
-      //                 reject(transactionReceipt);
-      //               }, 15000);
-      //             });
-      //           });
-      //         }
-      //       }),
-      //       new Promise((resolve) => {
-      //         const listener = async (Y, C, D, amount, destination, data, event) => {
-      //           const candidate = ethers.utils.solidityKeccak256([`bytes32[${N}]`, `bytes32[${N}]`, "bytes32",], [Y, C, D,]); // these shadow.
-      //           if (hash === candidate) {
-      //             firnContract.off("WithdrawalOccurred", listener);
-      //             resolve(event);
-      //           }
-      //         };
-      //         firnContract.on("WithdrawalOccurred", listener);
-      //       }),
-      //       nextBlock.then((block) => { // start the process NOW for a full rejection...!!! in case relay takes forever.
-      //         return new Promise((resolve, reject) => {
-      //           setTimeout(() => {
-      //             reject({ statusText: "No response" });
-      //           }, 20000);
-      //         });
-      //       }),
-      //       // give a huge grace period here of 20 seconds _after_ next epoch starts. i guess the idea is that
-      //       // the response can take a while to come back, even though the thing has actually successfully been mined.
-      //       // i'd rather have the user wait a little longer than necessary before being notified of the failure,
-      //       // than inappropriately alert them of a failure (false negative).
-      //     ]);
-      //     const { to, from, blockHash, transactionHash, blockNumber, confirmations, status, type } = transactionReceipt;
-      //     return { to, from, blockHash, transactionHash, blockNumber, confirmations, status, type }; // messy. need to exclude fields...
-      //   } catch (error) {
-      //     console.error(error); // will prob do nothing
-      //     if (error.message === "Failed to fetch")
-      //       throw new Error("Failed to reach the Firn relay; please try again.");
-      //     else if (error.status === 0)
-      //       throw new Error("The Firn transaction was mined, but reverted, and no other transaction effecting the same withdrawal was detected. This may be a timing issue.");
-      //     else if (error.statusText === "No response")
-      //       throw new Error("The relay hung while responding to the transaction, and the proof expired. This is probably a connectivity issue; please try again.");
-      //     else if (error.statusText === "Took too long")
-      //       throw new Error("The relay successfully broadcast the relevant transaction, but it was not mined in time, and has now expired. Please try again.");
-      //     else if (error.status === 500) {
-      //       if (error.statusText === "Tip too low")
-      //         throw new Error("The relay rejected the transaction's gas fee as excessively low. This can happen if gas prices fluctuate rapidly; please try again.");
-      //       else if (error.statusText === "Wrong epoch")
-      //         throw new Error("The relay refused to broadcast the transaction, citing a clock synchronization issue. Please try again.");
-      //       else
-      //         throw new Error("The relay refused to broadcast the transaction, citing an undisclosed issue. Please contact us directly to report this bug.");
-      //     } else
-      //       throw error; // pass on the misc error?! this is different from the front-end.
-      //   }
+      const away = (Math.floor(Number(block.timestamp) / EPOCH_LENGTH) + 1) * EPOCH_LENGTH - Number(block.timestamp);
+      // crude attempt to determine how much time is left in the epoch. typically this will be an underestimate
+      const delay = amount > client.state.available || away < 10;
+      if (delay) {
+        block = await nextEpoch(publicClient, block);
+        epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
+      }
+      let promise = nextEpoch(publicClient, block); // shadow the promise we imported. fight me!
+      const [Y, C, D, u, proof] = await client.withdraw(publicClient, amount, epoch, tip + fee, recipient, data, name);
+      const hash = keccak256(encodeAbiParameters([
+        { name: "", type: "bytes32[" + N + "]" },
+        { name: "", type: "bytes32[" + N + "]" },
+        { name: "", type: "bytes32" },
+      ], [
+        Y,
+        C,
+        D,
+      ]));
+
+      const alternative = new Promise((resolve) => {
+        const unwatch = publicClient.watchContractEvent({
+          address: ADDRESSES[name].PROXY,
+          abi: FIRN_ABI,
+          eventName: "WithdrawalOccurred",
+          onLogs(logs) {
+            logs.forEach((log) => {
+              const { Y, C, D } = log.args;
+              const candidate = keccak256(encodeAbiParameters([
+                { name: "", type: "bytes32[" + N + "]" },
+                { name: "", type: "bytes32[" + N + "]" },
+                { name: "", type: "bytes32" },
+              ], [
+                Y,
+                C,
+                D,
+              ]));
+              if (hash === candidate) {
+                unwatch();
+                resolve(log);
+              }
+            });
+          },
+        });
+        setTimeout(() => { unwatch(); }, 180000);
+      });
+
+      const body = { Y, C, D, u, epoch, tip, proof };
+
+      body.destination = recipient;
+      body.data = data; // relay will overwrite this anyway for now...
+      body.amount = amount;
+
+      try { // where should `try` start....? kind of subtle question
+        const transactionReceipt = await Promise.race([ // could be an event..
+          relay.fetch(`withdrawal${chainId}`, body).then((json) => {
+            return Promise.race([
+              publicClient.waitForTransactionReceipt({
+                hash: json.hash,
+              }).catch((error) => {
+                // apparently, when the thing reverts, instead of returning a receipt with { status: "reverted" }, it just throws.
+                // "CallExecutionError: Execution reverted for an unknown reason." ... "Details: execution reverted".
+
+                // what can _also_ happen is TransactionNotFoundError: Transaction with hash "0x____" could not be found
+                // this seems to be a bug: the whole goal is to _wait_ for the transaction, not to throw, if it's not there yet.
+                // in fact at one point i even confirmed with jxom that this is a bug, but he said it should be "fixed"
+                // don't know (yet) how to detect this programmatically...
+                console.error(error);
+                return { status: "reverted", transactionHash: json.hash }; // if (error.details === "execution reverted")
+              }),
+              promise.then((block) => {
+                // this guy handles the case where the relay _does_ respond with the tx hash, but then nobody mines it,
+                // and we sit around waiting until we're sure that the thing has expired....
+                return new Promise((resolve, reject) => {
+                  setTimeout(() => {
+                    reject({
+                      statusText: "Took too long",
+                      transactionHash: json.hash, // ...json
+                    });
+                  }, 15000);
+                });
+              })
+            ]);
+          }).then((data) => {
+            if (data.status === "success") {
+              return data;
+            } else {
+              return promise.then((block) => {
+                // this whole block is only for the extremely weird edge case where our thing got _certifiably_ reverted,
+                // but we wait around anyway, in case someone else mined it, but we haven't received word of that yet.
+                // warning: if `waitForTransaction` takes super-long, _and_ the thing fails (i.e., resolves with status === 0),
+                // then code won't flow over the below until _after_ `nextBlock` has resolved (i.e., could be > 5 seconds after).
+                // in this event, the below generic waiter could throw before this one does, even when our thing got reverted.
+                return new Promise((resolve, reject) => {
+                  setTimeout(() => {
+                    reject(data);
+                  }, 15000);
+                });
+              });
+            }
+          }),
+          alternative,
+          promise.then((block) => { // start the process NOW for a full rejection...!!! in case relay takes forever.
+            return new Promise((resolve, reject) => {
+              setTimeout(() => {
+                reject({ statusText: "No response" });
+              }, 20000);
+            });
+          }),
+          // give a huge grace period here of 20 seconds _after_ next epoch starts. i guess the idea is that
+          // the response can take a while to come back, even though the thing has actually successfully been mined.
+          // i'd rather have the user wait a little longer than necessary before being notified of the failure,
+          // than inappropriately alert them of a failure (false negative).
+          new Promise((resolve, reject) => {
+            setTimeout(() => {
+              reject({ statusText: "Radio silence" });
+            }, 180000);
+          }),
+        ]);
+        return transactionReceipt.transactionHash;
+      } catch (error) {
+          if (error.message === "Failed to fetch")
+            throw new Error("Failed to reach the Firn relay; please try again.");
+          else if (error.status === 0)
+            throw new Error("Your Firn transaction was mined, but reverted. This may be a timing issue.");
+          else if (error.statusText === "No response")
+            throw new Error("The relay hung while responding to the transaction, and the proof expired. This is probably a connectivity issue; please try again.");
+          else if (error.statusText === "Took too long")
+            throw new Error("The relay successfully broadcast the relevant transaction, but it was not mined in time, and has now expired. Please try again.");
+          else if (error.status === 500) {
+            if (error.statusText === "Tip too low")
+              throw new Error("The relay rejected the transaction's gas fee as excessively low. This can happen if gas prices fluctuate rapidly; please try again.");
+            else if (error.statusText === "Wrong epoch")
+              throw new Error("The relay refused to broadcast the transaction, citing a clock synchronization issue. Please try again.");
+            else
+              throw new Error("The relay refused to broadcast the transaction, citing an undisclosed issue. Please contact us directly to report this bug.");
+          } else
+            throw error; // pass on the misc error?! this is different from the front-end.
+        }
+      }
     }
     default:
       throw new Error("Method not found");
