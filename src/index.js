@@ -2,7 +2,6 @@ import * as mcl from "mcl-wasm";
 import { panel, text, heading } from "@metamask/snaps-ui";
 import { createPublicClient, http, formatUnits, getContract, keccak256, parseGwei, toBytes } from "viem";
 
-
 import { CHAIN_ID, CHAIN_PARAMS } from "./constants/networks.js";
 import { ADDRESSES } from "./constants/addresses";
 import { FIRN_ABI, READER_ABI, ORACLE_ABI, ARB_GAS_INFO_ABI } from "./constants/abis";
@@ -10,6 +9,8 @@ import { ElGamal, promise } from "./crypto/algebra";
 import { Client, EPOCH_LENGTH } from "./crypto/client";
 import { nextEpoch } from "./utils/nextEpoch";
 import { optimismTxDataGas } from "./utils/gas";
+import { Relay } from "./utils/relay";
+
 
 const FEE = 128;
 export const WITHDRAWAL_GAS = 3750000n;
@@ -134,8 +135,8 @@ export const onRpcRequest = async ({ origin, request }) => {
         transport: http(), // 'https://eth-mainnet.g.alchemy.com/v2/WM5ly1JW2TrWhk8byZfTt2cpRVTpRUnw'
       });
       const transaction = request.params;
-      const block = await publicClient.getBlock();
-      const epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
+      let block = await publicClient.getBlock();
+      let epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
       const client = new Client({ secret, nextEpoch });
       // const contract = getContract({
       //   address: ADDRESSES[name].PROXY,
@@ -240,11 +241,10 @@ export const onRpcRequest = async ({ origin, request }) => {
         },
       });
       if (!approved) throw new Error("Client rejected the transaction confirmation prompt.");
-      return "0x02497b11698be8a15981b9a4751a28591d2e978eced0aa4ddf389267e905c66c";
-      //
-      //   const relay = new Relay();
-      //   let block = await provider.getBlock("latest");
-      //   // let epoch = Math.floor(block.timestamp / EPOCH_LENGTH);
+
+      const relay = new Relay();
+      block = await publicClient.getBlock();
+      epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
       //   // const away = (Math.floor(block.timestamp / EPOCH_LENGTH) + 1) * EPOCH_LENGTH - block.timestamp;
       //   // crude attempt to determine how much time is left in the epoch. typically this will be an underestimate
       //   // const delay = amount > client.state.available || away < 20;
