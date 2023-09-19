@@ -42,16 +42,16 @@ const DYNAMIC_OVERHEAD = 1.24;
 export const onRpcRequest = async ({ origin, request }) => {
   switch (request.method) {
     case "initialize": {
+      const [address] = await ethereum.request({
+        method: "eth_requestAccounts"
+      });
       const state = await snap.request({
         method: "snap_manageState",
         params: {
           operation: "get"
         }
       });
-      if (state !== null) return;  // they're already logged in.
-      const [address] = await ethereum.request({
-        method: "eth_requestAccounts"
-      });
+      if (state !== null && address in state) return;  // they're already logged in.
       const signature = await ethereum.request({
         method: "personal_sign",
         params: ["This message will log you into your Firn account.", address],
@@ -60,22 +60,25 @@ export const onRpcRequest = async ({ origin, request }) => {
       await snap.request({
         method: "snap_manageState",
         params: {
-          newState: { plaintext },
+          newState: { ...state, [address]: plaintext },
           operation: "update"
         }
       }); // return nothing for now
       return;
     }
     case "requestBalance": {
+      const [address] = await ethereum.request({
+        method: "eth_requestAccounts"
+      });
       const state = await snap.request({
         method: "snap_manageState",
         params: {
           operation: "get"
         }
       });
-      if (state === null)
-        throw new Error("User hasn't logged into Firn yet.");
-      const plaintext = state.plaintext;
+      if (state === null || !(address in state))
+        throw new Error("User has not yet logged in under this address.");
+      const plaintext = state[address];
       await algebra;
       const secret = new mcl.Fr();
       secret.setBigEndianMod(toBytes(plaintext));
@@ -120,15 +123,18 @@ export const onRpcRequest = async ({ origin, request }) => {
       return balance;
     }
     case "transact": {
+      const [address] = await ethereum.request({
+        method: "eth_requestAccounts"
+      });
       const state = await snap.request({
         method: "snap_manageState",
         params: {
           operation: "get"
         }
       });
-      if (state === null)
-        throw new Error("User hasn't logged into Firn yet.");
-      const plaintext = state.plaintext;
+      if (state === null || !(address in state))
+        throw new Error("User has not yet logged in under this address.");
+      const plaintext = state[address];
       await algebra;
       const secret = new mcl.Fr();
       secret.setBigEndianMod(toBytes(plaintext));
@@ -223,7 +229,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       const tip = Math.ceil(parseFloat(formatUnits(gas, 15)));
       // note: right now, don't bother checking pending. we're assuming that they have 0 pending balance, or more generally
       // that their pending balance won't make or break
-      // if (balance < amount + fee + tip) throw new Error("Insufficient balance for transaction.");
+      if (balance < amount + fee + tip) throw new Error("Insufficient balance for transaction.");
       const approved = await snap.request({
         method: "snap_dialog",
         params: {
@@ -298,7 +304,7 @@ export const onRpcRequest = async ({ origin, request }) => {
 
       try { // where should `try` start....? kind of subtle question
         const transactionReceipt = await Promise.race([ // could be an event..
-          relay.fetch(`withdrawal${chainId}`, body).then((json) => {
+          relay.fetch(`withdrawal${Number(chainId)}`, body).then((json) => {
             return Promise.race([
               publicClient.waitForTransactionReceipt({
                 hash: json.hash,
