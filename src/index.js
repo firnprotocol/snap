@@ -14,7 +14,7 @@ import {
 import { CHAIN_ID, CHAIN_PARAMS } from "./constants/networks.js";
 import { ADDRESSES } from "./constants/addresses";
 import { FIRN_ABI, ORACLE_ABI, ARB_GAS_INFO_ABI } from "./constants/abis";
-import { ElGamal, N, promise } from "./crypto/algebra";
+import { ElGamal, N, algebra } from "./crypto/algebra";
 import { Client, EPOCH_LENGTH } from "./crypto/client";
 import { nextEpoch } from "./utils/nextEpoch";
 import { optimismTxDataGas } from "./utils/gas";
@@ -76,7 +76,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       if (state === null)
         throw new Error("User hasn't logged into Firn yet.");
       const plaintext = state.plaintext;
-      await promise;
+      await algebra;
       const secret = new mcl.Fr();
       secret.setBigEndianMod(toBytes(plaintext));
 
@@ -116,7 +116,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           ]),
         }
       });
-      if (!approved) throw new Error("Client rejected the balance prompt.");
+      if (!approved) throw new Error("User rejected the request.");
       return balance;
     }
     case "transact": {
@@ -129,7 +129,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       if (state === null)
         throw new Error("User hasn't logged into Firn yet.");
       const plaintext = state.plaintext;
-      await promise;
+      await algebra;
       const secret = new mcl.Fr();
       secret.setBigEndianMod(toBytes(plaintext));
 
@@ -200,7 +200,6 @@ export const onRpcRequest = async ({ origin, request }) => {
           return l2Gas * l2GasPrice + l1GasPrice * l1CalldataSize;
         }
       };
-
       const amount = transaction.value; // value, amount, etc etc.
       const data = transaction.data; // assert isBytes(data);
       const recipient = transaction.to; // assert isAddress(recipient)?
@@ -240,7 +239,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           ]),
         },
       });
-      if (!approved) throw new Error("Client rejected the transaction confirmation prompt.");
+      if (!approved) throw new Error("User rejected the request.");
 
       const relay = new Relay();
       block = await publicClient.getBlock(); // i guess get it again, in case they tarried.
@@ -252,7 +251,7 @@ export const onRpcRequest = async ({ origin, request }) => {
         block = await nextEpoch(publicClient, block);
         epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
       }
-      let promise = nextEpoch(publicClient, block); // shadow the promise we imported. fight me!
+      const promise = nextEpoch(publicClient, block);
       const [Y, C, D, u, proof] = await client.withdraw(publicClient, amount, epoch, tip + fee, recipient, data, name);
       const hash = keccak256(encodeAbiParameters([
         { name: "", type: "bytes32[" + N + "]" },

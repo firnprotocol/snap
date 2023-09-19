@@ -259,7 +259,7 @@ export function recursivePolynomials(list, a, b) {
   return recursivePolynomials(list.flat(), a, b);
 }
 
-export const promise = BN128.promise.then(() => {
+export const algebra = BN128.promise.then(() => {
   PedersenCommitment.base.g = BN128.BASE;
   PedersenCommitment.base.h = BN128.mapInto(keccak256("h"));
   PedersenVectorCommitment.base.gs = new PointVector(Array.from({ length: M << 1 }).map((_, i) => BN128.mapInto(keccak256(encodePacked(["string", "uint256"], ["g", i])))));
