@@ -91,7 +91,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       const name = CHAIN_ID[chainId];
       const publicClient = createPublicClient({
         chain: CHAIN_PARAMS[name].chain, // ???
-        transport: http(), // 'https://eth-mainnet.g.alchemy.com/v2/WM5ly1JW2TrWhk8byZfTt2cpRVTpRUnw' //
+        transport: http(), // custom(ethereum),
       });
 
       const block = await publicClient.getBlock();
@@ -201,7 +201,7 @@ export const onRpcRequest = async ({ origin, request }) => {
             publicClient,
           });
           const l2GasPrice = await publicClient.getGasPrice();
-          const data = await arbitrum.getPricesInWei();
+          const data = await arbitrum.read.getPricesInWei();
           const l1GasPrice = data[1];
           return l2Gas * l2GasPrice + l1GasPrice * l1CalldataSize;
         }
@@ -236,12 +236,12 @@ export const onRpcRequest = async ({ origin, request }) => {
           type: "confirmation",
           content: panel([
             heading("Transaction Approval Request"),
-            text(`The site **${origin}** is proposing the following Firn transaction on your behalf.`),
+            text(`The site **${origin}** is proposing the following transaction on your behalf.`),
             text(`**Destination Address:** ${recipient}.`),
             text(`**Value:** ${(amount / 1000).toFixed(3)} ETH.`),
             text(`**Data:** ${data}.`),
             text(`Your fees, including gas, will be ${((fee + tip) / 1000).toFixed(3)} ETH.`),
-            text(`Would you like to proceed with this transaction?`),
+            text(`Would you like to execute this transaction privately via Firn?`),
           ]),
         },
       });

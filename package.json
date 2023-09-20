@@ -1,6 +1,6 @@
 {
   "name": "@firnprotocol/snap",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Firn Protocol's official MetaMask Snap.",
   "repository": {
     "type": "git",
@@ -38,8 +38,8 @@
     "registry": "https://registry.npmjs.org/"
   },
   "bugs": {
-    "url": "https://github.com/firnprotocol/snap/issues"
+    "url": "https://github.com/firnprotocol/tome/issues"
   },
-  "homepage": "https://github.com/firnprotocol/example#readme",
+  "homepage": "https://npmjs.com/package/@firnprotocol/snap",
   "license": "ISC"
 }

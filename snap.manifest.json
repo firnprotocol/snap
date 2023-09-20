@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Firn's official MetaMask Snap.",
   "proposedName": "Firn Protocol",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/firnprotocol/snap.git"
   },
   "source": {
-    "shasum": "65BJzvy/iq/fUjahXurCBoGaVSz/Jvirtsvt1oiSm60=",
+    "shasum": "YP2W/90K+gugaJd1qrPkdo7XwCX+3+JaWdgdX3QjigA=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",

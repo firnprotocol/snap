@@ -4,7 +4,7 @@ module.exports = {
     port: 8080,
     transpilationMode: 'localAndDeps'
   },
-  // bundlerCustomizer: (bundler) => {
-  //   bundler.transform("uglifyify");
-  // },
+  bundlerCustomizer: (bundler) => {
+    bundler.transform("uglifyify");
+  },
 };

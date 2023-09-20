@@ -1,7 +1,8 @@
 # Firn Protocol's Snap
 
-Firn's Snap allows websites to securely invoke Firn protocol on behalf of users. An end-to-end, working example
-exhibiting the below methods is available at [`firnprotocol/example`](https://github.com/firnprotocol/example)
+Firn's Snap allows websites to securely invoke Firn protocol on behalf of users.
+
+An end-to-end, working example exhibiting the below methods is available at [`firnprotocol/tome`](https://github.com/firnprotocol/tome)
 .
 
 ## API
