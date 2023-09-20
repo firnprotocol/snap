@@ -114,7 +114,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           content: panel([
             heading("Balance Disclosure Request"),
             text(`The site **${origin}** is requesting to see your Firn account balance.`),
-            text(`Your current balance on the chain **${name}** is **${(balance / 1000).toFixed(3)}** ETH.`),
+            text(`Your current balance on the chain **${name}** is **${(balance / 1000).toFixed(3)} ETH**.`),
             text(`Would you like to disclose this information to **${origin}**?`),
           ]),
         }

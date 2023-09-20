@@ -2,37 +2,31 @@
 
 Firn's Snap allows websites to securely invoke Firn protocol on behalf of users.
 
-An end-to-end, working example exhibiting the below methods is available at [`firnprotocol/tome`](https://github.com/firnprotocol/tome)
-.
+An end-to-end, open-source working example exhibiting the below methods is available, hosted at [Tome](https://tome.fm); see also [`firnprotocol/tome`](https://github.com/firnprotocol/tome) for the sourcecode.
 
 ## API
 
 ### Connecting
 
-Connect to the Firn Snap
-in [the standard way](https://docs.metamask.io/guide/snaps-development-guide.html#the-snap-source-code); that is:
+Connect to the Firn Snap in [the standard way](https://docs.metamask.io/guide/snaps-development-guide.html#the-snap-source-code); that is:
 
 ```javascript
-await window.ethereum.request({
-  method: "wallet_enable",
-  params: [{ wallet_snap: { "npm:@firnprotocol/snap": {} } }],
+await provider.request({
+  method: "wallet_requestSnaps",
+  params: { "npm:@firnprotocol/snap": {} },
 });
 ```
 
 ### Initialize
 
-The `initialize` method prompts the user to "log into" their Firn account (in practice, this entails signing a special
-message). As a side effect, it caches the user's secret Firn key in secure, encrypted storage (visible only to the Firn
-snap, and not to the calling website).
+The `initialize` method prompts the user to "log into" his Firn account, on behalf of the currently logged-in Ethereum account (in practice, this entails signing a special message). As a side effect, it caches the user's secret Firn key in secure, encrypted storage (visible only within the Firn snap, and not to the calling website). If this method is called more than once, the additional calls will be no-ops.
 
-In practice, you may want to call this method immediately after connecting to the Snap in the first place. All of the below methods require that this method be executed first.
+This method must be called before either of the below methods are. In practice, you may want to call this method immediately after prompting the user to connect the Snap in the first place.
 
 ```javascript
 await window.ethereum.request({
   method: "wallet_invokeSnap",
-  params: ["npm:@firnprotocol/snap", {
-    method: "initialize",
-  }],
+  params: { snapId: "npm:@firnprotocol/snap", request: { method: "initialize" } }
 });
 ```
 
@@ -40,43 +34,51 @@ This method will either return nothing (upon success) or will throw an error (up
 
 ### Request Balance
 
-The `requestBalance` method prompts the user to disclose their Firn balance. The RPC method will _either_ return the
-user's Firn balance—denominated in _milliether_ (!)—as a plain JavaScript number, or will throw an error. Here's an example
-invocation:
+The `requestBalance` method prompts the user to disclose his Firn balance. The RPC method will _either_ return the user's Firn balance—denominated in _milliether_ (!)—as a plain JavaScript number, or will throw an error. Here's an example invocation:
 
 ```javascript
-const balance = await window.ethereum.request({
+const balance = await window.ethereum.request({ // might throw; will be handled above
   method: "wallet_invokeSnap",
-  params: ["npm:@firnprotocol/snap", {
-    method: "requestBalance",
-  }],
+  params: { snapId: "npm:@firnprotocol/snap", request: { method: "requestBalance" } }
 });
 console.log(`User's Firn balance is ${(balance / 1000).toFixed(3)} ETH.`);
 ```
 
 ### Transact
 
-The `transact` method prompts the user to anonymously execute a prescribed `unsignedTx`, on behalf of their
-Firn account. It will either return the `transactionReceipt` of the resulting successful, _mined_ transaction, or else will throw
-an error. Here's an example invocation:
+The `transact` method prompts the user to anonymously execute a prescribed `transaction` using his Firn account. It will either return the `transactionHash` of the resulting successful, _mined_ transaction, or else will throw a descriptive error. Here's an example invocation:
 
 ```javascript
-const provider = new ethers.providers.Web3Provider(window.ethereum);
-const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-const unsignedTx = await contract.populateTransaction.myMethod(
-  {
-    firstArg: aValue,
-    secondArg: anotherValue,
-  }, {
-    value: ethers.utils.parseUnits("1", "ether"),
-  }
-);
-const transactionReceipt = await window.ethereum.request({
-  method: "wallet_invokeSnap",
-  params: ["npm:@firnprotocol/snap", {
-    method: "transact",
-    params: unsignedTx,
-  }],
+import { encodeFunctionData } from "viem";
+
+const TOME_ABI = [{
+  "inputs": [
+    {
+      "internalType": "string",
+      "name": "message",
+      "type": "string"
+    }
+  ],
+  "name": "broadcast",
+  "outputs": [],
+  "stateMutability": "nonpayable",
+  "type": "function"
+}];
+const data = encodeFunctionData({
+  abi: TOME_ABI,
+  functionName: "broadcast",
+  args: ["A test message."],
 });
-console.log(`Transaction successful; its hash is ${transactionReceipt.transactionHash}.`);
+const transaction = {
+  to: "0x0D9993a3e3A0e73633c153CCf49A0bD17159A60D", // Tome address on Base
+  data, // a bytes-like hex string
+  value: 0, // a plain `Number`, denominated in milli-ether
+};
+const transactionHash = await window.ethereum.request({
+  method: "wallet_invokeSnap",
+  params: { snapId: defaultSnapOrigin, request: { method: "transact", params: transaction } },
+});
+console.log(`Transaction successful! Its hash is ${transactionHash}.`);
 ```
+
+Further details and usage examples can be found at [Tome](https://tome.fm).
