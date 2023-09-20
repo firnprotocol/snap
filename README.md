@@ -1,8 +1,8 @@
 # Firn Protocol's Snap
 
-Firn's Snap allows websites to securely invoke Firn protocol on behalf of users.
+Firn's Snap allows websites to securely invoke Firn Protocol on behalf of users.
 
-An end-to-end, open-source working example exhibiting the below methods is available, hosted at [Tome](https://tome.fm); see also [`firnprotocol/tome`](https://github.com/firnprotocol/tome) for the sourcecode.
+An end-to-end, open-source working example exhibiting the below methods is available, and hosted, at [Tome](https://tome.fm); see also [`firnprotocol/tome`](https://github.com/firnprotocol/tome) for the source.
 
 ## API
 
@@ -19,7 +19,7 @@ await provider.request({
 
 ### Initialize
 
-The `initialize` method prompts the user to "log into" his Firn account, on behalf of the currently logged-in Ethereum account (in practice, this entails signing a special message). As a side effect, it caches the user's secret Firn key in secure, encrypted storage (visible only within the Firn snap, and not to the calling website). If this method is called more than once, the additional calls will be no-ops.
+The `initialize` method prompts the user to "log into" his Firn account, on behalf of his currently logged-in Ethereum account (in practice, this entails signing a special message). As a side effect, it caches the user's secret Firn key in secure, encrypted storage (visible only within the Firn snap, and not to the calling website). If this method is called more than once, then the additional calls will be no-ops.
 
 This method must be called before either of the below methods are. In practice, you may want to call this method immediately after prompting the user to connect the Snap in the first place.
 
