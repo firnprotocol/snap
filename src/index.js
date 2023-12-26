@@ -10,7 +10,7 @@ import {
   encodeAbiParameters, custom
 } from "viem";
 
-import { CHAIN_ID, CHAIN_PARAMS } from "./constants/networks.js";
+import { CHAIN_PARAMS, CHAINS } from "./constants/networks.js";
 import { ADDRESSES } from "./constants/addresses";
 import { FIRN_ABI, ORACLE_ABI, ARB_GAS_INFO_ABI } from "./constants/abis";
 import { ElGamal, N, algebra } from "./crypto/algebra";
@@ -83,14 +83,12 @@ export const onRpcRequest = async ({ origin, request }) => {
       const secret = new mcl.Fr();
       secret.setBigEndianMod(toBytes(plaintext));
 
-      const chainId = await ethereum.request({
-        method: "eth_chainId",
-      });
-      if (!Object.keys(CHAIN_ID).includes(chainId))
+      const chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+      const name = CHAINS[chainId]
+      if (name === undefined)
         throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
-      const name = CHAIN_ID[chainId];
       const publicClient = createPublicClient({
-        chain: CHAIN_PARAMS[name].chain, // ???
+        chain: CHAIN_PARAMS[name].chain,
         transport: custom(ethereum),
       });
 
@@ -138,12 +136,10 @@ export const onRpcRequest = async ({ origin, request }) => {
       const secret = new mcl.Fr();
       secret.setBigEndianMod(toBytes(plaintext));
 
-      const chainId = await ethereum.request({
-        method: "eth_chainId",
-      });
-      if (!Object.keys(CHAIN_ID).includes(chainId))
+      const chainId = Number(await ethereum.request({ method: "eth_chainId" }));
+      const name = CHAINS[chainId]
+      if (name === undefined)
         throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
-      const name = CHAIN_ID[chainId];
       const publicClient = createPublicClient({
         chain: CHAIN_PARAMS[name].chain, // ???
         transport: custom(ethereum),

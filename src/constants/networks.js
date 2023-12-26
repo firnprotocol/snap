@@ -1,23 +1,23 @@
 import { arbitrum, mainnet, optimism, base } from "viem/chains";
 
-export const CHAIN_ID = {
-  "0x1": "Ethereum",
-  "0xa": "OP Mainnet",
-  "0xa4b1": "Arbitrum One",
-  "0x2105": "Base"
+export const CHAINS = {
+  [mainnet.id]: "Ethereum",
+  [optimism.id]: "OP Mainnet",
+  [arbitrum.id]: "Arbitrum One",
+  [base.id]: "Base",
 };
 
 export const CHAIN_PARAMS = {
   "Ethereum": {
-    chain: mainnet,
+    chain: mainnet
   },
   "OP Mainnet": {
-    chain: optimism,
+    chain: optimism
   },
   "Arbitrum One": {
-    chain: arbitrum,
+    chain: arbitrum
   },
   "Base": {
-    chain: base,
-  }
+    chain: base
+  },
 };
