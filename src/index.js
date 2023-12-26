@@ -2,13 +2,12 @@ import * as mcl from "mcl-wasm";
 import { panel, text, heading } from "@metamask/snaps-ui";
 import {
   createPublicClient,
-  http,
   formatUnits,
   getContract,
   keccak256,
   parseGwei,
   toBytes,
-  encodeAbiParameters
+  encodeAbiParameters, custom
 } from "viem";
 
 import { CHAIN_ID, CHAIN_PARAMS } from "./constants/networks.js";
@@ -18,15 +17,16 @@ import { ElGamal, N, algebra } from "./crypto/algebra";
 import { Client, EPOCH_LENGTH } from "./crypto/client";
 import { nextEpoch } from "./utils/nextEpoch";
 import { optimismTxDataGas } from "./utils/gas";
-import { Relay } from "./utils/relay";
+import { relayFetch } from "./utils/relay";
 
 
 const FEE = 128;
-export const WITHDRAWAL_GAS = 3750000n;
+export const WITHDRAWAL_GAS = 3850000n;
 const WITHDRAWAL_TX_DATA_GAS = 46500;
 const WITHDRAWAL_CALLDATA_SIZE = 3076n;
-const FIXED_OVERHEAD = 2100;
-const DYNAMIC_OVERHEAD = 1.24;
+const FIXED_OVERHEAD = 188;
+const DYNAMIC_OVERHEAD = 0.684;
+
 
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
@@ -91,17 +91,16 @@ export const onRpcRequest = async ({ origin, request }) => {
       const name = CHAIN_ID[chainId];
       const publicClient = createPublicClient({
         chain: CHAIN_PARAMS[name].chain, // ???
-        transport: http(), // custom(ethereum),
+        transport: custom(ethereum),
       });
 
       const block = await publicClient.getBlock();
       const epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
-      const nextEpoch = (publicClient, block) => Promise.resolve(block); // dummy
-      const client = new Client({ secret, nextEpoch });
+      const client = new Client({ secret });
       const contract = getContract({
         address: ADDRESSES[name].PROXY,
         abi: FIRN_ABI,
-        publicClient,
+        client: { publicClient }
       });
       const result = await contract.read.simulateAccounts([[client.pub], epoch]);
       const future = ElGamal.deserialize(result[0]);
@@ -147,12 +146,12 @@ export const onRpcRequest = async ({ origin, request }) => {
       const name = CHAIN_ID[chainId];
       const publicClient = createPublicClient({
         chain: CHAIN_PARAMS[name].chain, // ???
-        transport: http(), // 'https://eth-mainnet.g.alchemy.com/v2/WM5ly1JW2TrWhk8byZfTt2cpRVTpRUnw'
+        transport: custom(ethereum),
       });
       const transaction = request.params;
       let block = await publicClient.getBlock();
       let epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
-      const client = new Client({ secret, nextEpoch });
+      const client = new Client({ secret });
       const result = await publicClient.multicall({
         contracts: [
           {
@@ -186,7 +185,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           const oracle = getContract({
             address: ADDRESSES[name].ORACLE,
             abi: ORACLE_ABI,
-            publicClient
+            client: { publicClient }
           });
           const l1BaseFee = await oracle.read.l1BaseFee();
           const l2GasPrice = await publicClient.getGasPrice(); // could try to batch these... fuqit
@@ -198,7 +197,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           const arbitrum = getContract({
             address: ADDRESSES[name].ARB_GAS_INFO,
             abi: ARB_GAS_INFO_ABI,
-            publicClient,
+            client: { publicClient }
           });
           const l2GasPrice = await publicClient.getGasPrice();
           const data = await arbitrum.read.getPricesInWei();
@@ -247,7 +246,6 @@ export const onRpcRequest = async ({ origin, request }) => {
       });
       if (!approved) throw new Error("User rejected the request.");
 
-      const relay = new Relay();
       block = await publicClient.getBlock(); // i guess get it again, in case they tarried.
       epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
       const away = (Math.floor(Number(block.timestamp) / EPOCH_LENGTH) + 1) * EPOCH_LENGTH - Number(block.timestamp);
@@ -304,7 +302,7 @@ export const onRpcRequest = async ({ origin, request }) => {
 
       try { // where should `try` start....? kind of subtle question
         const transactionReceipt = await Promise.race([ // could be an event..
-          relay.fetch(`withdrawal${Number(chainId)}`, body).then((json) => {
+          relayFetch(`withdrawal${Number(chainId)}`, body).then((json) => {
             return Promise.race([
               publicClient.waitForTransactionReceipt({
                 hash: json.hash,

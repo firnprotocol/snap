@@ -1,8 +1,8 @@
 diff --git a/node_modules/mcl-wasm/dist/mcl_c.js b/node_modules/mcl-wasm/dist/mcl_c.js
-index b641ac6..9757915 100644
+index b641ac6..ffe79a8 100644
 --- a/node_modules/mcl-wasm/dist/mcl_c.js
 +++ b/node_modules/mcl-wasm/dist/mcl_c.js
-@@ -81,12 +81,12 @@ var Module = (() => {
+@@ -81,12 +81,6 @@ var Module = (() => {
              else if (typeof document != "undefined" && document.currentScript) {
                  scriptDirectory = document.currentScript.src;
              }
@@ -12,12 +12,6 @@ index b641ac6..9757915 100644
 -            if (scriptDirectory.indexOf("blob:") !== 0) {
 -                scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf("/") + 1);
 -            }
-+            // if (_scriptDir) {
-+            //     scriptDirectory = _scriptDir;
-+            // }
-+            // if (scriptDirectory.indexOf("blob:") !== 0) {
-+            //     scriptDirectory = scriptDirectory.substr(0, scriptDirectory.replace(/[?#].*/, "").lastIndexOf("/") + 1);
-+            // }
              else {
                  scriptDirectory = "";
              }

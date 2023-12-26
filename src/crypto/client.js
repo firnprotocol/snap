@@ -6,6 +6,7 @@ import { WithdrawalProof } from "./withdrawal";
 import { ADDRESSES } from "../constants/addresses";
 import { FIRN_ABI, READER_ABI } from "../constants/abis";
 import { toHex } from "viem/utils";
+import { nextEpoch } from "../utils/nextEpoch";
 
 export const EPOCH_LENGTH = 60;
 
@@ -22,12 +23,11 @@ class State {
 }
 
 export class Client {
-  constructor({ secret, nextEpoch }) {
+  constructor({ secret }) {
     this.secret = secret;
     this.pub = BN128.toCompressed(mcl.mul(BN128.BASE, this.secret)); // we already computed this elsewhere, but...
 
     this.state = new State();
-    this.nextEpoch = nextEpoch
   }
 
   async initialize(publicClient, block, present, future) { // params won't be retained.
@@ -35,7 +35,7 @@ export class Client {
     this.state.available += this.readBalance(present);
     this.state.pending += this.readBalance(future.sub(present));
     // +=, not equal, in case that reading takes long, and we receive funds in the mean time (possibly with a rollover).
-    this.nextEpoch(publicClient, block).then((block) => {
+    nextEpoch(publicClient, block).then((block) => {
       this.state.rollOver();
     });
   }

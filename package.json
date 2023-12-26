@@ -20,15 +20,15 @@
   },
   "dependencies": {
     "mcl-wasm": "^1.4.0",
-    "viem": "^1.10.0"
+    "viem": "^2.0.0-rc.3"
   },
   "devDependencies": {
     "@browserify/uglifyify": "^6.0.0",
     "@lavamoat/allow-scripts": "^2.0.3",
     "@metamask/auto-changelog": "^2.6.0",
-    "@metamask/snaps-cli": "^0.38.3-flask.1",
-    "@metamask/snaps-types": "^0.38.2-flask.1",
-    "@metamask/snaps-ui": "^0.37.4-flask.1",
+    "@metamask/snaps-cli": "^0.38.4-flask.1",
+    "@metamask/snaps-types": "^0.38.3-flask.1",
+    "@metamask/snaps-ui": "^0.37.5-flask.1",
     "patch-package": "^8.0.0",
     "postinstall-postinstall": "^2.1.0"
   },
