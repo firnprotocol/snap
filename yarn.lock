@@ -1827,7 +1827,7 @@ __metadata:
     mcl-wasm: ^1.4.0
     patch-package: ^8.0.0
     postinstall-postinstall: ^2.1.0
-    viem: ^2.0.0-rc.3
+    viem: ^2.0.0
   languageName: unknown
   linkType: soft
 
@@ -7761,9 +7761,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"viem@npm:^2.0.0-rc.3":
-  version: 2.0.0-rc.3
-  resolution: "viem@npm:2.0.0-rc.3"
+"viem@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "viem@npm:2.0.0"
   dependencies:
     "@adraffy/ens-normalize": 1.10.0
     "@noble/curves": 1.2.0
@@ -7778,7 +7778,7 @@ __metadata:
   peerDependenciesMeta:
     typescript:
       optional: true
-  checksum: fc0f69a0b71ad046e8ce3b8228d1ed8d0c45ac61061e1e57eec236dff891b004e3c8501da3b51058a27a7e6087593ee2c951f0e1a64768c3d82b0069a1ef5dba
+  checksum: c1610d1a78490872f279351aeef54834211c57ca51fb4a2834e1b48bb0f0c1bcfbb5e02e91a66341eb6c316458a2b6556b7da24d22ab0db7e1eb0f5d01d2946a
   languageName: node
   linkType: hard
 

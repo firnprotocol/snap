@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "mcl-wasm": "^1.4.0",
-    "viem": "^2.0.0-rc.3"
+    "viem": "^2.0.0"
   },
   "devDependencies": {
     "@browserify/uglifyify": "^6.0.0",
