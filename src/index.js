@@ -300,9 +300,7 @@ export const onRpcRequest = async ({ origin, request }) => {
         const transactionReceipt = await Promise.race([ // could be an event..
           relayFetch(`withdrawal${Number(chainId)}`, body).then((json) => {
             return Promise.race([
-              publicClient.waitForTransactionReceipt({
-                hash: json.hash,
-              }).catch((error) => {
+              publicClient.waitForTransactionReceipt({ hash: json.hash }).catch((error) => {
                 // apparently, when the thing reverts, instead of returning a receipt with { status: "reverted" }, it just throws.
                 // "CallExecutionError: Execution reverted for an unknown reason." ... "Details: execution reverted".
 
