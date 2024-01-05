@@ -84,7 +84,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       secret.setBigEndianMod(toBytes(plaintext));
 
       const chainId = Number(await ethereum.request({ method: "eth_chainId" }));
-      const name = CHAINS[chainId]
+      const name = CHAINS[chainId];
       if (name === undefined)
         throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
       const publicClient = createPublicClient({
@@ -98,7 +98,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       const contract = getContract({
         address: ADDRESSES[name].PROXY,
         abi: FIRN_ABI,
-        client: { publicClient }
+        client: publicClient
       });
       const result = await contract.read.simulateAccounts([[client.pub], epoch]);
       const future = ElGamal.deserialize(result[0]);
@@ -137,7 +137,7 @@ export const onRpcRequest = async ({ origin, request }) => {
       secret.setBigEndianMod(toBytes(plaintext));
 
       const chainId = Number(await ethereum.request({ method: "eth_chainId" }));
-      const name = CHAINS[chainId]
+      const name = CHAINS[chainId];
       if (name === undefined)
         throw new Error(`The chain ID ${chainId} is not supported by Firn.`);
       const publicClient = createPublicClient({
@@ -181,7 +181,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           const oracle = getContract({
             address: ADDRESSES[name].ORACLE,
             abi: ORACLE_ABI,
-            client: { publicClient }
+            client: publicClient
           });
           const l1BaseFee = await oracle.read.l1BaseFee();
           const l2GasPrice = await publicClient.getGasPrice(); // could try to batch these... fuqit
@@ -193,7 +193,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           const arbitrum = getContract({
             address: ADDRESSES[name].ARB_GAS_INFO,
             abi: ARB_GAS_INFO_ABI,
-            client: { publicClient }
+            client: publicClient
           });
           const l2GasPrice = await publicClient.getGasPrice();
           const data = await arbitrum.read.getPricesInWei();
