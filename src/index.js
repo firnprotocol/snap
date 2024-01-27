@@ -300,7 +300,7 @@ export const onRpcRequest = async ({ origin, request }) => {
         const transactionReceipt = await Promise.race([ // could be an event..
           relayFetch(`withdrawal${Number(chainId)}`, body).then((json) => {
             return Promise.race([
-              publicClient.waitForTransactionReceipt({ hash: json.hash }).catch((error) => {
+              publicClient.waitForTransactionReceipt(json).catch((error) => {
                 // apparently, when the thing reverts, instead of returning a receipt with { status: "reverted" }, it just throws.
                 // "CallExecutionError: Execution reverted for an unknown reason." ... "Details: execution reverted".
 
@@ -364,12 +364,14 @@ export const onRpcRequest = async ({ origin, request }) => {
       } catch (error) {
         if (error.message === "Failed to fetch")
           throw new Error("Failed to reach the Firn relay; please try again.");
-        else if (error.status === 0)
+        else if (error.status === "reverted")
           throw new Error("Your Firn transaction was mined, but reverted. This may be a timing issue.");
         else if (error.statusText === "No response")
           throw new Error("The relay hung while responding to the transaction, and the proof expired. This is probably a connectivity issue; please try again.");
         else if (error.statusText === "Took too long")
           throw new Error("The relay successfully broadcast the relevant transaction, but it was not mined in time, and has now expired. Please try again.");
+        else if (error.statusText === "Radio silence")
+          throw new Error("We lost contact with the network while trying to broadcast your transaction; this is probably a connectivity issue.");
         else if (error.status === 500) {
           if (error.statusText === "Tip too low")
             throw new Error("The relay rejected the transaction's gas fee as excessively low. This can happen if gas prices fluctuate rapidly; please try again.");
