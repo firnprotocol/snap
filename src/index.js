@@ -16,16 +16,16 @@ import { FIRN_ABI, ORACLE_ABI, ARB_GAS_INFO_ABI } from "./constants/abis";
 import { ElGamal, N, algebra } from "./crypto/algebra";
 import { Client, EPOCH_LENGTH } from "./crypto/client";
 import { nextEpoch } from "./utils/nextEpoch";
-import { optimismTxDataGas } from "./utils/gas";
+import { optimismTxCompressedSize } from "./utils/gas";
 import { relayFetch } from "./utils/relay";
 
 
 const FEE = 128;
 export const WITHDRAWAL_GAS = 3850000n;
-const WITHDRAWAL_TX_DATA_GAS = 46500;
+const WITHDRAWAL_TX_COMPRESSED_SIZE = 2900n;
 const WITHDRAWAL_CALLDATA_SIZE = 3076n;
-const FIXED_OVERHEAD = 188;
-const DYNAMIC_OVERHEAD = 0.684;
+const BLOB_BASE_FEE_SCALAR = 810949n;
+const BASE_FEE_SCALAR = 1368n;
 
 
 /**
@@ -177,15 +177,17 @@ export const onRpcRequest = async ({ origin, request }) => {
           const maxFeePerGas = l1GasPrice + maxPriorityFeePerGas; // l1GasPrice = lastBaseFeePerGas
           return l1Gas * maxFeePerGas;
         },
-        "OP Mainnet": async (l2Gas, txDataGas) => {
+        "OP Mainnet": async (l2Gas, txCompressedSize) => {
           const oracle = getContract({
             address: ADDRESSES[name].ORACLE,
             abi: ORACLE_ABI,
             client: publicClient
           });
           const l1BaseFee = await oracle.read.l1BaseFee();
-          const l2GasPrice = await publicClient.getGasPrice(); // could try to batch these... fuqit
-          const l1DataFee = l1BaseFee * BigInt(Math.ceil((txDataGas + FIXED_OVERHEAD) * DYNAMIC_OVERHEAD));
+          const blobBaseFee = await oracle.read.blobBaseFee();
+          const weightedGasPrice = 16n * BASE_FEE_SCALAR * l1BaseFee / 1000000n + BLOB_BASE_FEE_SCALAR * blobBaseFee;
+          const l1DataFee = txCompressedSize * weightedGasPrice
+          const { maxFeePerGas: l2GasPrice } = await publicClient.estimateFeesPerGas() // getGasPrice(); ???
           const l2ExecutionFee = l2GasPrice * l2Gas;
           return l1DataFee + l2ExecutionFee;
         },
@@ -213,15 +215,15 @@ export const onRpcRequest = async ({ origin, request }) => {
         // if (data !== "0x") increase tip somehow... TODO. revisit.
       } else if (name === "OP Mainnet" || name === "Base") {
         const l2Gas = WITHDRAWAL_GAS;
-        const txDataGas = WITHDRAWAL_TX_DATA_GAS + optimismTxDataGas(data);
-        gas = await calculators["OP Mainnet"](l2Gas, txDataGas);
+        const txCompressedSize = WITHDRAWAL_TX_COMPRESSED_SIZE + optimismTxCompressedSize(data);
+        gas = await calculators["OP Mainnet"](l2Gas, txCompressedSize);
       } else if (name === "Arbitrum One") {
         const l2Gas = WITHDRAWAL_GAS;
         const l1CalldataSize = WITHDRAWAL_CALLDATA_SIZE + BigInt(data.length - 2 >> 1);
         gas = await calculators["Arbitrum One"](l2Gas, l1CalldataSize);
       }
       const balance = client.state.available + client.state.pending;
-      const tip = Math.ceil(parseFloat(formatUnits(gas, 15)));
+      const tip = Math.round(parseFloat(formatUnits(gas, 15)));
       // note: right now, don't bother checking pending. we're assuming that they have 0 pending balance, or more generally
       // that their pending balance won't make or break
       if (balance < amount + fee + tip) throw new Error("Insufficient balance for transaction.");
