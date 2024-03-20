@@ -27,7 +27,6 @@ const WITHDRAWAL_CALLDATA_SIZE = 3076n;
 const BLOB_BASE_FEE_SCALAR = 810949n;
 const BASE_FEE_SCALAR = 1368n;
 
-
 /**
  * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
  *
