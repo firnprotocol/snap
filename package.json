@@ -4,7 +4,7 @@
   "description": "Firn Protocol's official MetaMask Snap.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/firnprotocol/snap.git"
+    "url": "git+https://github.com/firnprotocol/snap.git"
   },
   "files": [
     "dist/",
