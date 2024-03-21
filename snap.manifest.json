@@ -4,10 +4,10 @@
   "proposedName": "Firn Protocol",
   "repository": {
     "type": "git",
-    "url": "https://github.com/firnprotocol/snap.git"
+    "url": "git+https://github.com/firnprotocol/snap.git"
   },
   "source": {
-    "shasum": "VtsGilcmvfhNPZhTBHFi2o2Zc9mkWcsL5yDl2cmEXw4=",
+    "shasum": "Zy0tRIBxbZ73WmlY2ItE2TONhIQWyVq68miEG6zR/SE=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
