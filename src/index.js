@@ -184,7 +184,7 @@ export const onRpcRequest = async ({ origin, request }) => {
           });
           const l1BaseFee = await oracle.read.l1BaseFee();
           const blobBaseFee = await oracle.read.blobBaseFee();
-          const weightedGasPrice = 16n * BASE_FEE_SCALAR * l1BaseFee / 1000000n + BLOB_BASE_FEE_SCALAR * blobBaseFee;
+          const weightedGasPrice = (16n * BASE_FEE_SCALAR * l1BaseFee + BLOB_BASE_FEE_SCALAR * blobBaseFee) / 100000n;
           const l1DataFee = txCompressedSize * weightedGasPrice
           const { maxFeePerGas: l2GasPrice } = await publicClient.estimateFeesPerGas() // getGasPrice(); ???
           const l2ExecutionFee = l2GasPrice * l2Gas;
