@@ -9,6 +9,12 @@ export default [
   ...compat.extends("airbnb-base"),
   eslintConfigPrettier,
   {
+    rules: {
+      "no-bitwise": "off",
+      "no-plusplus": "off",
+      "import/prefer-default-export": "off",
+      camelcase: "off",
+    },
     ignores: [
       "node_modules",
       "dist",

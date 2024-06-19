@@ -26,7 +26,10 @@ This method must be called before either of the below methods are. In practice, 
 ```javascript
 await window.ethereum.request({
   method: "wallet_invokeSnap",
-  params: { snapId: "npm:@firnprotocol/snap", request: { method: "initialize" } }
+  params: {
+    snapId: "npm:@firnprotocol/snap",
+    request: { method: "initialize" },
+  },
 });
 ```
 
@@ -37,9 +40,13 @@ This method will either return nothing (upon success) or will throw an error (up
 The `requestBalance` method prompts the user to disclose his Firn balance. The RPC method will _either_ return the user's Firn balance—denominated in _milliether_ (!)—as a plain JavaScript number, or will throw an error. Here's an example invocation:
 
 ```javascript
-const balance = await window.ethereum.request({ // might throw; will be handled above
+const balance = await window.ethereum.request({
+  // might throw; will be handled above
   method: "wallet_invokeSnap",
-  params: { snapId: "npm:@firnprotocol/snap", request: { method: "requestBalance" } }
+  params: {
+    snapId: "npm:@firnprotocol/snap",
+    request: { method: "requestBalance" },
+  },
 });
 console.log(`User's Firn balance is ${(balance / 1000).toFixed(3)} ETH.`);
 ```
@@ -51,19 +58,21 @@ The `transact` method prompts the user to anonymously execute a prescribed `tran
 ```javascript
 import { encodeFunctionData } from "viem";
 
-const TOME_ABI = [{
-  "inputs": [
-    {
-      "internalType": "string",
-      "name": "message",
-      "type": "string"
-    }
-  ],
-  "name": "broadcast",
-  "outputs": [],
-  "stateMutability": "nonpayable",
-  "type": "function"
-}];
+const TOME_ABI = [
+  {
+    inputs: [
+      {
+        internalType: "string",
+        name: "message",
+        type: "string",
+      },
+    ],
+    name: "broadcast",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+];
 const data = encodeFunctionData({
   abi: TOME_ABI,
   functionName: "broadcast",
@@ -76,7 +85,10 @@ const transaction = {
 };
 const transactionHash = await window.ethereum.request({
   method: "wallet_invokeSnap",
-  params: { snapId: defaultSnapOrigin, request: { method: "transact", params: transaction } },
+  params: {
+    snapId: defaultSnapOrigin,
+    request: { method: "transact", params: transaction },
+  },
 });
 console.log(`Transaction successful! Its hash is ${transactionHash}.`);
 ```

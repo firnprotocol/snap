@@ -1,22 +1,24 @@
 import * as mcl from "mcl-wasm";
 
+import { toHex } from "viem/utils";
 import { BN128 } from "./bn128";
-import { ElGamal, ElGamalVector, N, PointVector, } from "./algebra";
+import { ElGamal, ElGamalVector, N, PointVector } from "./algebra";
 import { WithdrawalProof } from "./withdrawal";
 import { ADDRESSES } from "../constants/addresses";
 import { FIRN_ABI, READER_ABI } from "../constants/abis";
-import { toHex } from "viem/utils";
 import { nextEpoch } from "../utils/nextEpoch";
 
 export const EPOCH_LENGTH = 60;
 
 class State {
-  constructor() { // should i be using BNs?
+  constructor() {
+    // should i be using BNs?
     this.available = 0;
     this.pending = 0;
   }
 
-  rollOver() { // is epoch necessary? will be called async.
+  rollOver() {
+    // is epoch necessary? will be called async.
     this.available += this.pending;
     this.pending = 0;
   }
@@ -30,7 +32,8 @@ export class Client {
     this.state = new State();
   }
 
-  async initialize(publicClient, block, present, future) { // params won't be retained.
+  async initialize(publicClient, block, present, future) {
+    // params won't be retained.
     this.blockNumber = block.blockNumber; // slightly after `present` and `future` were fetched?
     this.state.available += this.readBalance(present);
     this.state.pending += this.readBalance(future.sub(present));
@@ -43,19 +46,20 @@ export class Client {
   readBalance(account) {
     const exponent = ElGamal.decrypt(account, this.secret);
     let accumulator = new mcl.G1();
-    for (let i = 0; i < Math.pow(2, 32); i++) {
+    for (let i = 0; i < 2**32; i++) {
       if (accumulator.isEqual(exponent)) return i;
       accumulator = mcl.add(accumulator, BN128.BASE);
     }
     // just do brute force, since worker seems very hard to do. not clear that we were ever gaining much through the workers, actually.
   }
+
   async withdraw(publicClient, amount, epoch, fee, destination, data, name) {
     const random = new Uint8Array(32);
     self.crypto.getRandomValues(random); // can i do this in snap?!?
     const anonset = await publicClient.readContract({
       address: ADDRESSES[name].READER,
       abi: READER_ABI,
-      functionName: 'sampleAnonset',
+      functionName: "sampleAnonset",
       args: [toHex(random), amount],
     });
 
@@ -66,12 +70,13 @@ export class Client {
       anonset[j] = anonset[i];
       anonset[i] = swap;
     }
-    let index = undefined;
-    for (let i = 0; i < N; i++) { // am i or the recipient already in the anonset?
+    let index;
+    for (let i = 0; i < N; i++) {
+      // am i or the recipient already in the anonset?
       if (anonset[i] === this.pub) index = i;
     }
     if (index === undefined) {
-      index = random[0] & N - 1;
+      index = random[0] & (N - 1);
       anonset[index] = this.pub; // is this secure?
     }
     const accounts = await publicClient.readContract({
@@ -83,16 +88,22 @@ export class Client {
     const Y = new PointVector(anonset.map(BN128.fromCompressed));
     const r = BN128.randomScalar();
     const D = mcl.mul(BN128.BASE, r);
-    const C = new ElGamalVector(Y.vector.map((pub, i) => {
-      let message = new mcl.G1();
-      if (i === index) {
-        const exponent = new mcl.Fr();
-        exponent.setInt(-amount - fee);
-        message = mcl.mul(ElGamal.base.g, exponent);
-      }
-      return new ElGamal(mcl.add(message, mcl.mul(pub, r)), D); // wastes a curve addition
-    }));
-    const Cn = new ElGamalVector(accounts.map((account, i) => ElGamal.deserialize(account).add(C.vector[i])));
+    const C = new ElGamalVector(
+      Y.vector.map((pub, i) => {
+        let message = new mcl.G1();
+        if (i === index) {
+          const exponent = new mcl.Fr();
+          exponent.setInt(-amount - fee);
+          message = mcl.mul(ElGamal.base.g, exponent);
+        }
+        return new ElGamal(mcl.add(message, mcl.mul(pub, r)), D); // wastes a curve addition
+      }),
+    );
+    const Cn = new ElGamalVector(
+      accounts.map((account, i) =>
+        ElGamal.deserialize(account).add(C.vector[i]),
+      ),
+    );
     const u = mcl.mul(BN128.gEpoch(epoch), this.secret);
     const proof = WithdrawalProof.prove(
       Y,

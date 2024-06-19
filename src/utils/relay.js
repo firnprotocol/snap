@@ -1,13 +1,14 @@
 const address = "https://www.firn.link";
 
-export async function relayFetch(endpoint, body) { // wraps regular fetch.
-                                                   // not doing any timeout for now.
+export async function relayFetch(endpoint, body) {
+  // wraps regular fetch.
+  // not doing any timeout for now.
   const init = {
     method: "POST",
     mode: "cors", // is this necessary?!? check.
     headers: {
-      "Content-Type": "application/json"
-    }
+      "Content-Type": "application/json",
+    },
   };
   if (body) {
     init.body = JSON.stringify(body);

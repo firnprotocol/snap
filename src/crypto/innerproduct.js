@@ -18,12 +18,14 @@ export class InnerProductProof {
     return result;
   }
 
-  static prove(commitment, salt) { // arg: a vector commitment which was decommited.
+  static prove(commitment, salt) {
+    // arg: a vector commitment which was decommited.
     const result = new InnerProductProof();
     result.L = [];
     result.R = [];
 
-    const recursiveProof = (result, as, bs, previousChallenge) => { // ref to result
+    const recursiveProof = (result, as, bs, previousChallenge) => {
+      // ref to result
       const M = as.length();
       if (M === 1) {
         result.a = as.vector[0];
@@ -42,25 +44,50 @@ export class InnerProductProof {
 
       const cL = asLeft.innerProduct(bsRight);
       const cR = asRight.innerProduct(bsLeft);
-      const L = mcl.add(mcl.add(gsRight.multiExponentiate(asLeft), hsLeft.multiExponentiate(bsRight)), mcl.mul(PedersenVectorCommitment.base["h"], cL));
-      const R = mcl.add(mcl.add(gsLeft.multiExponentiate(asRight), hsRight.multiExponentiate(bsLeft)), mcl.mul(PedersenVectorCommitment.base["h"], cR));
+      const L = mcl.add(
+        mcl.add(
+          gsRight.multiExponentiate(asLeft),
+          hsLeft.multiExponentiate(bsRight),
+        ),
+        mcl.mul(PedersenVectorCommitment.base.h, cL),
+      );
+      const R = mcl.add(
+        mcl.add(
+          gsLeft.multiExponentiate(asRight),
+          hsRight.multiExponentiate(bsLeft),
+        ),
+        mcl.mul(PedersenVectorCommitment.base.h, cR),
+      );
       result.L.push(L);
       result.R.push(R);
 
       const x = new mcl.Fr();
-      x.setBigEndianMod(toBytes(keccak256(encodeAbiParameters([
-        { name: "", type: "bytes32" },
-        { name: "", type: "bytes32[2]" },
-        { name: "", type: "bytes32[2]" },
-      ], [
-        toHex(previousChallenge.serialize().reverse()),
-        BN128.toETH(L),
-        BN128.toETH(R),
-      ]))));
+      x.setBigEndianMod(
+        toBytes(
+          keccak256(
+            encodeAbiParameters(
+              [
+                { name: "", type: "bytes32" },
+                { name: "", type: "bytes32[2]" },
+                { name: "", type: "bytes32[2]" },
+              ],
+              [
+                toHex(previousChallenge.serialize().reverse()),
+                BN128.toETH(L),
+                BN128.toETH(R),
+              ],
+            ),
+          ),
+        ),
+      );
 
       const xInv = mcl.inv(x);
-      PedersenVectorCommitment.base.gs = gsLeft.times(xInv).add(gsRight.times(x));
-      PedersenVectorCommitment.base.hs = hsLeft.times(x).add(hsRight.times(xInv));
+      PedersenVectorCommitment.base.gs = gsLeft
+        .times(xInv)
+        .add(gsRight.times(x));
+      PedersenVectorCommitment.base.hs = hsLeft
+        .times(x)
+        .add(hsRight.times(xInv));
       const asPrime = asLeft.times(x).add(asRight.times(xInv));
       const bsPrime = bsLeft.times(xInv).add(bsRight.times(x));
 

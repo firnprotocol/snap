@@ -9,5 +9,5 @@ export function optimismTxCompressedSize(data) {
     if (data.slice(i, i + 2) === "00") zeroBytes++;
     else nonZeroBytes++;
   }
-  return BigInt(zeroBytes * 4 + nonZeroBytes * 16 >> 4); // floor div by 16
+  return BigInt((zeroBytes * 4 + nonZeroBytes * 16) >> 4); // floor div by 16
 }

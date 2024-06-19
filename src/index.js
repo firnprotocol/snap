@@ -7,7 +7,8 @@ import {
   keccak256,
   parseGwei,
   toBytes,
-  encodeAbiParameters, custom
+  encodeAbiParameters,
+  custom,
 } from "viem";
 
 import { CHAIN_PARAMS, CHAINS } from "./constants/networks.js";
@@ -18,7 +19,6 @@ import { Client, EPOCH_LENGTH } from "./crypto/client";
 import { nextEpoch } from "./utils/nextEpoch";
 import { optimismTxCompressedSize } from "./utils/gas";
 import { relayFetch } from "./utils/relay";
-
 
 const FEE = 128;
 export const WITHDRAWAL_GAS = 3850000n;
@@ -42,15 +42,15 @@ export const onRpcRequest = async ({ origin, request }) => {
   switch (request.method) {
     case "initialize": {
       const [address] = await ethereum.request({
-        method: "eth_requestAccounts"
+        method: "eth_requestAccounts",
       });
       const state = await snap.request({
         method: "snap_manageState",
         params: {
-          operation: "get"
-        }
+          operation: "get",
+        },
       });
-      if (state !== null && address in state) return;  // they're already logged in.
+      if (state !== null && address in state) return; // they're already logged in.
       const signature = await ethereum.request({
         method: "personal_sign",
         params: ["This message will log you into your Firn account.", address],
@@ -60,20 +60,20 @@ export const onRpcRequest = async ({ origin, request }) => {
         method: "snap_manageState",
         params: {
           newState: { ...state, [address]: plaintext },
-          operation: "update"
-        }
+          operation: "update",
+        },
       }); // return nothing for now
       return;
     }
     case "requestBalance": {
       const [address] = await ethereum.request({
-        method: "eth_requestAccounts"
+        method: "eth_requestAccounts",
       });
       const state = await snap.request({
         method: "snap_manageState",
         params: {
-          operation: "get"
-        }
+          operation: "get",
+        },
       });
       if (state === null || !(address in state))
         throw new Error("User has not yet logged in under this address.");
@@ -97,9 +97,12 @@ export const onRpcRequest = async ({ origin, request }) => {
       const contract = getContract({
         address: ADDRESSES[name].PROXY,
         abi: FIRN_ABI,
-        client: publicClient
+        client: publicClient,
       });
-      const result = await contract.read.simulateAccounts([[client.pub], epoch]);
+      const result = await contract.read.simulateAccounts([
+        [client.pub],
+        epoch,
+      ]);
       const future = ElGamal.deserialize(result[0]);
       await client.initialize(publicClient, block, future, future);
       const balance = client.state.available + client.state.pending;
@@ -109,24 +112,30 @@ export const onRpcRequest = async ({ origin, request }) => {
           type: "confirmation",
           content: panel([
             heading("Balance Disclosure Request"),
-            text(`The site **${origin}** is requesting to see your Firn account balance.`),
-            text(`Your current balance on the chain **${name}** is **${(balance / 1000).toFixed(3)} ETH**.`),
-            text(`Would you like to disclose this information to **${origin}**?`),
+            text(
+              `The site **${origin}** is requesting to see your Firn account balance.`,
+            ),
+            text(
+              `Your current balance on the chain **${name}** is **${(balance / 1000).toFixed(3)} ETH**.`,
+            ),
+            text(
+              `Would you like to disclose this information to **${origin}**?`,
+            ),
           ]),
-        }
+        },
       });
       if (!approved) throw new Error("User rejected the request.");
       return balance;
     }
     case "transact": {
       const [address] = await ethereum.request({
-        method: "eth_requestAccounts"
+        method: "eth_requestAccounts",
       });
       const state = await snap.request({
         method: "snap_manageState",
         params: {
-          operation: "get"
-        }
+          operation: "get",
+        },
       });
       if (state === null || !(address in state))
         throw new Error("User has not yet logged in under this address.");
@@ -161,16 +170,17 @@ export const onRpcRequest = async ({ origin, request }) => {
             functionName: "simulateAccounts",
             args: [[client.pub], epoch + 1],
           },
-        ]
+        ],
       });
       const present = ElGamal.deserialize(result[0].result[0]);
       const future = ElGamal.deserialize(result[1].result[0]);
       await client.initialize(publicClient, block, present, future);
-      const calculators = {  // now imperative.....
-        "Ethereum": async (l1Gas, maxPriorityFeePerGas) => {
+      const calculators = {
+        // now imperative.....
+        Ethereum: async (l1Gas, maxPriorityFeePerGas) => {
           const feeHistory = await publicClient.getFeeHistory({
             blockCount: 1,
-            rewardPercentiles: []
+            rewardPercentiles: [],
           });
           const l1GasPrice = feeHistory.baseFeePerGas[0];
           const maxFeePerGas = l1GasPrice + maxPriorityFeePerGas; // l1GasPrice = lastBaseFeePerGas
@@ -180,13 +190,17 @@ export const onRpcRequest = async ({ origin, request }) => {
           const oracle = getContract({
             address: ADDRESSES[name].ORACLE,
             abi: ORACLE_ABI,
-            client: publicClient
+            client: publicClient,
           });
           const l1BaseFee = await oracle.read.l1BaseFee();
           const blobBaseFee = await oracle.read.blobBaseFee();
-          const weightedGasPrice = (16n * BASE_FEE_SCALAR * l1BaseFee + BLOB_BASE_FEE_SCALAR * blobBaseFee) / 100000n;
+          const weightedGasPrice =
+            (16n * BASE_FEE_SCALAR * l1BaseFee +
+              BLOB_BASE_FEE_SCALAR * blobBaseFee) /
+            100000n;
           const l1DataFee = txCompressedSize * weightedGasPrice;
-          const { maxFeePerGas: l2GasPrice } = await publicClient.estimateFeesPerGas(); // getGasPrice(); ???
+          const { maxFeePerGas: l2GasPrice } =
+            await publicClient.estimateFeesPerGas(); // getGasPrice(); ???
           const l2ExecutionFee = l2GasPrice * l2Gas;
           return l1DataFee + l2ExecutionFee;
         },
@@ -194,13 +208,13 @@ export const onRpcRequest = async ({ origin, request }) => {
           const arbitrum = getContract({
             address: ADDRESSES[name].ARB_GAS_INFO,
             abi: ARB_GAS_INFO_ABI,
-            client: publicClient
+            client: publicClient,
           });
           const l2GasPrice = await publicClient.getGasPrice();
           const data = await arbitrum.read.getPricesInWei();
           const l1GasPrice = data[1];
           return l2Gas * l2GasPrice + l1GasPrice * l1CalldataSize;
-        }
+        },
       };
       const amount = transaction.value; // value, amount, etc etc.
       const data = transaction.data; // assert isBytes(data);
@@ -214,30 +228,39 @@ export const onRpcRequest = async ({ origin, request }) => {
         // if (data !== "0x") increase tip somehow... TODO. revisit.
       } else if (name === "OP Mainnet" || name === "Base") {
         const l2Gas = WITHDRAWAL_GAS;
-        const txCompressedSize = WITHDRAWAL_TX_COMPRESSED_SIZE + optimismTxCompressedSize(data);
+        const txCompressedSize =
+          WITHDRAWAL_TX_COMPRESSED_SIZE + optimismTxCompressedSize(data);
         gas = await calculators["OP Mainnet"](l2Gas, txCompressedSize);
       } else if (name === "Arbitrum One") {
         const l2Gas = WITHDRAWAL_GAS;
-        const l1CalldataSize = WITHDRAWAL_CALLDATA_SIZE + BigInt(data.length - 2 >> 1);
+        const l1CalldataSize =
+          WITHDRAWAL_CALLDATA_SIZE + BigInt((data.length - 2) >> 1);
         gas = await calculators["Arbitrum One"](l2Gas, l1CalldataSize);
       }
       const balance = client.state.available + client.state.pending;
       const tip = Math.round(parseFloat(formatUnits(gas, 15)));
       // note: right now, don't bother checking pending. we're assuming that they have 0 pending balance, or more generally
       // that their pending balance won't make or break
-      if (balance < amount + fee + tip) throw new Error("Insufficient balance for transaction.");
+      if (balance < amount + fee + tip)
+        throw new Error("Insufficient balance for transaction.");
       const approved = await snap.request({
         method: "snap_dialog",
         params: {
           type: "confirmation",
           content: panel([
             heading("Transaction Approval Request"),
-            text(`The site **${origin}** is proposing the following transaction on your behalf.`),
+            text(
+              `The site **${origin}** is proposing the following transaction on your behalf.`,
+            ),
             text(`**Destination Address:** ${recipient}.`),
             text(`**Value:** ${(amount / 1000).toFixed(3)} ETH.`),
             text(`**Data:** ${data}.`),
-            text(`Your fees, including gas, will be ${((fee + tip) / 1000).toFixed(3)} ETH.`),
-            text(`Would you like to execute this transaction privately via Firn?`),
+            text(
+              `Your fees, including gas, will be ${((fee + tip) / 1000).toFixed(3)} ETH.`,
+            ),
+            text(
+              `Would you like to execute this transaction privately via Firn?`,
+            ),
           ]),
         },
       });
@@ -245,7 +268,10 @@ export const onRpcRequest = async ({ origin, request }) => {
 
       block = await publicClient.getBlock(); // i guess get it again, in case they tarried.
       epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
-      const away = (Math.floor(Number(block.timestamp) / EPOCH_LENGTH) + 1) * EPOCH_LENGTH - Number(block.timestamp);
+      const away =
+        (Math.floor(Number(block.timestamp) / EPOCH_LENGTH) + 1) *
+          EPOCH_LENGTH -
+        Number(block.timestamp);
       // crude attempt to determine how much time is left in the epoch. typically this will be an underestimate
       const delay = amount > client.state.available || away < 10;
       if (delay) {
@@ -253,16 +279,25 @@ export const onRpcRequest = async ({ origin, request }) => {
         epoch = Math.floor(Number(block.timestamp) / EPOCH_LENGTH);
       }
       const promise = nextEpoch(publicClient, block);
-      const [Y, C, D, u, proof] = await client.withdraw(publicClient, amount, epoch, tip + fee, recipient, data, name);
-      const hash = keccak256(encodeAbiParameters([
-        { name: "", type: "bytes32[" + N + "]" },
-        { name: "", type: "bytes32[" + N + "]" },
-        { name: "", type: "bytes32" },
-      ], [
-        Y,
-        C,
-        D,
-      ]));
+      const [Y, C, D, u, proof] = await client.withdraw(
+        publicClient,
+        amount,
+        epoch,
+        tip + fee,
+        recipient,
+        data,
+        name,
+      );
+      const hash = keccak256(
+        encodeAbiParameters(
+          [
+            { name: "", type: "bytes32[" + N + "]" },
+            { name: "", type: "bytes32[" + N + "]" },
+            { name: "", type: "bytes32" },
+          ],
+          [Y, C, D],
+        ),
+      );
 
       const alternative = new Promise((resolve) => {
         const unwatch = publicClient.watchContractEvent({
@@ -272,15 +307,16 @@ export const onRpcRequest = async ({ origin, request }) => {
           onLogs(logs) {
             logs.forEach((log) => {
               const { Y, C, D } = log.args;
-              const candidate = keccak256(encodeAbiParameters([
-                { name: "", type: "bytes32[" + N + "]" },
-                { name: "", type: "bytes32[" + N + "]" },
-                { name: "", type: "bytes32" },
-              ], [
-                Y,
-                C,
-                D,
-              ]));
+              const candidate = keccak256(
+                encodeAbiParameters(
+                  [
+                    { name: "", type: "bytes32[" + N + "]" },
+                    { name: "", type: "bytes32[" + N + "]" },
+                    { name: "", type: "bytes32" },
+                  ],
+                  [Y, C, D],
+                ),
+              );
               if (hash === candidate) {
                 unwatch();
                 resolve(log);
@@ -288,7 +324,9 @@ export const onRpcRequest = async ({ origin, request }) => {
             });
           },
         });
-        setTimeout(() => { unwatch(); }, 180000);
+        setTimeout(() => {
+          unwatch();
+        }, 180000);
       });
 
       const body = { Y, C, D, u, epoch, tip, proof };
@@ -297,54 +335,59 @@ export const onRpcRequest = async ({ origin, request }) => {
       body.data = data; // relay will overwrite this anyway for now...
       body.amount = amount;
 
-      try { // where should `try` start....? kind of subtle question
-        const transactionReceipt = await Promise.race([ // could be an event..
-          relayFetch(`withdrawal${Number(chainId)}`, body).then((json) => {
-            return Promise.race([
-              publicClient.waitForTransactionReceipt(json).catch((error) => {
-                // apparently, when the thing reverts, instead of returning a receipt with { status: "reverted" }, it just throws.
-                // "CallExecutionError: Execution reverted for an unknown reason." ... "Details: execution reverted".
+      try {
+        // where should `try` start....? kind of subtle question
+        const transactionReceipt = await Promise.race([
+          // could be an event..
+          relayFetch(`withdrawal${Number(chainId)}`, body)
+            .then((json) => {
+              return Promise.race([
+                publicClient.waitForTransactionReceipt(json).catch((error) => {
+                  // apparently, when the thing reverts, instead of returning a receipt with { status: "reverted" }, it just throws.
+                  // "CallExecutionError: Execution reverted for an unknown reason." ... "Details: execution reverted".
 
-                // what can _also_ happen is TransactionNotFoundError: Transaction with hash "0x____" could not be found
-                // this seems to be a bug: the whole goal is to _wait_ for the transaction, not to throw, if it's not there yet.
-                // in fact at one point i even confirmed with jxom that this is a bug, but he said it should be "fixed"
-                // don't know (yet) how to detect this programmatically...
-                console.error(error);
-                return { status: "reverted", transactionHash: json.hash }; // if (error.details === "execution reverted")
-              }),
-              promise.then((block) => {
-                // this guy handles the case where the relay _does_ respond with the tx hash, but then nobody mines it,
-                // and we sit around waiting until we're sure that the thing has expired....
-                return new Promise((resolve, reject) => {
-                  setTimeout(() => {
-                    reject({
-                      statusText: "Took too long",
-                      transactionHash: json.hash, // ...json
-                    });
-                  }, 15000);
+                  // what can _also_ happen is TransactionNotFoundError: Transaction with hash "0x____" could not be found
+                  // this seems to be a bug: the whole goal is to _wait_ for the transaction, not to throw, if it's not there yet.
+                  // in fact at one point i even confirmed with jxom that this is a bug, but he said it should be "fixed"
+                  // don't know (yet) how to detect this programmatically...
+                  console.error(error);
+                  return { status: "reverted", transactionHash: json.hash }; // if (error.details === "execution reverted")
+                }),
+                promise.then((block) => {
+                  // this guy handles the case where the relay _does_ respond with the tx hash, but then nobody mines it,
+                  // and we sit around waiting until we're sure that the thing has expired....
+                  return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                      reject({
+                        statusText: "Took too long",
+                        transactionHash: json.hash, // ...json
+                      });
+                    }, 15000);
+                  });
+                }),
+              ]);
+            })
+            .then((data) => {
+              if (data.status === "success") {
+                return data;
+              } else {
+                return promise.then((block) => {
+                  // this whole block is only for the extremely weird edge case where our thing got _certifiably_ reverted,
+                  // but we wait around anyway, in case someone else mined it, but we haven't received word of that yet.
+                  // warning: if `waitForTransaction` takes super-long, _and_ the thing fails (i.e., resolves with status === 0),
+                  // then code won't flow over the below until _after_ `nextBlock` has resolved (i.e., could be > 5 seconds after).
+                  // in this event, the below generic waiter could throw before this one does, even when our thing got reverted.
+                  return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                      reject(data);
+                    }, 15000);
+                  });
                 });
-              })
-            ]);
-          }).then((data) => {
-            if (data.status === "success") {
-              return data;
-            } else {
-              return promise.then((block) => {
-                // this whole block is only for the extremely weird edge case where our thing got _certifiably_ reverted,
-                // but we wait around anyway, in case someone else mined it, but we haven't received word of that yet.
-                // warning: if `waitForTransaction` takes super-long, _and_ the thing fails (i.e., resolves with status === 0),
-                // then code won't flow over the below until _after_ `nextBlock` has resolved (i.e., could be > 5 seconds after).
-                // in this event, the below generic waiter could throw before this one does, even when our thing got reverted.
-                return new Promise((resolve, reject) => {
-                  setTimeout(() => {
-                    reject(data);
-                  }, 15000);
-                });
-              });
-            }
-          }),
+              }
+            }),
           alternative,
-          promise.then((block) => { // start the process NOW for a full rejection...!!! in case relay takes forever.
+          promise.then((block) => {
+            // start the process NOW for a full rejection...!!! in case relay takes forever.
             return new Promise((resolve, reject) => {
               setTimeout(() => {
                 reject({ statusText: "No response" });
@@ -366,22 +409,35 @@ export const onRpcRequest = async ({ origin, request }) => {
         if (error.message === "Failed to fetch")
           throw new Error("Failed to reach the Firn relay; please try again.");
         else if (error.status === "reverted")
-          throw new Error("Your Firn transaction was mined, but reverted. This may be a timing issue.");
+          throw new Error(
+            "Your Firn transaction was mined, but reverted. This may be a timing issue.",
+          );
         else if (error.statusText === "No response")
-          throw new Error("The relay hung while responding to the transaction, and the proof expired. This is probably a connectivity issue; please try again.");
+          throw new Error(
+            "The relay hung while responding to the transaction, and the proof expired. This is probably a connectivity issue; please try again.",
+          );
         else if (error.statusText === "Took too long")
-          throw new Error("The relay successfully broadcast the relevant transaction, but it was not mined in time, and has now expired. Please try again.");
+          throw new Error(
+            "The relay successfully broadcast the relevant transaction, but it was not mined in time, and has now expired. Please try again.",
+          );
         else if (error.statusText === "Radio silence")
-          throw new Error("We lost contact with the network while trying to broadcast your transaction; this is probably a connectivity issue.");
+          throw new Error(
+            "We lost contact with the network while trying to broadcast your transaction; this is probably a connectivity issue.",
+          );
         else if (error.status === 500) {
           if (error.statusText === "Tip too low")
-            throw new Error("The relay rejected the transaction's gas fee as excessively low. This can happen if gas prices fluctuate rapidly; please try again.");
+            throw new Error(
+              "The relay rejected the transaction's gas fee as excessively low. This can happen if gas prices fluctuate rapidly; please try again.",
+            );
           else if (error.statusText === "Wrong epoch")
-            throw new Error("The relay refused to broadcast the transaction, citing a clock synchronization issue. Please try again.");
+            throw new Error(
+              "The relay refused to broadcast the transaction, citing a clock synchronization issue. Please try again.",
+            );
           else
-            throw new Error("The relay refused to broadcast the transaction, citing an undisclosed issue. Please contact us directly to report this bug.");
-        } else
-          throw error; // pass on the misc error?! this is different from the front-end.
+            throw new Error(
+              "The relay refused to broadcast the transaction, citing an undisclosed issue. Please contact us directly to report this bug.",
+            );
+        } else throw error; // pass on the misc error?! this is different from the front-end.
       }
     }
     default:

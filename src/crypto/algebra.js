@@ -1,6 +1,6 @@
 import * as mcl from "mcl-wasm";
-import { keccak256 } from 'viem';
-import { encodePacked } from 'viem';
+import { keccak256 } from "viem";
+import { encodePacked } from "viem";
 
 import { BN128 } from "./bn128";
 
@@ -16,10 +16,14 @@ export class PedersenCommitment {
   };
 
   // point = BN128.zero
-  static commit(value) { // an already-reduced BN
+  static commit(value) {
+    // an already-reduced BN
     const result = new PedersenCommitment();
     result.randomness = BN128.randomScalar(); // feels weirdly asymmetric that we have to stash this, and not the randomnesss
-    result.point = mcl.add(mcl.mul(PedersenCommitment.base.g, value), mcl.mul(PedersenCommitment.base.h, result.randomness));
+    result.point = mcl.add(
+      mcl.mul(PedersenCommitment.base.g, value),
+      mcl.mul(PedersenCommitment.base.h, result.randomness),
+    );
     return result; // i guess????
   }
 }
@@ -38,11 +42,17 @@ export class FieldVector {
   }
 
   flip() {
-    return new FieldVector(Array.from({ length: this.length() }).map((_, i) => this.vector[(this.length() - i) % this.length()]));
+    return new FieldVector(
+      Array.from({ length: this.length() }).map(
+        (_, i) => this.vector[(this.length() - i) % this.length()],
+      ),
+    );
   }
 
   add(other) {
-    return new FieldVector(other.vector.map((elem, i) => mcl.add(this.vector[i], elem)));
+    return new FieldVector(
+      other.vector.map((elem, i) => mcl.add(this.vector[i], elem)),
+    );
   }
 
   negate() {
@@ -55,14 +65,19 @@ export class FieldVector {
 
   push(constant) {
     this.vector.push(constant);
-  };
+  }
 
   sum() {
-    return this.vector.reduce((accum, cur) => mcl.add(accum, cur), new mcl.Fr());
+    return this.vector.reduce(
+      (accum, cur) => mcl.add(accum, cur),
+      new mcl.Fr(),
+    );
   }
 
   hadamard(other) {
-    return new FieldVector(other.vector.map((elem, i) => mcl.mul(this.vector[i], elem)));
+    return new FieldVector(
+      other.vector.map((elem, i) => mcl.mul(this.vector[i], elem)),
+    );
   }
 
   invert() {
@@ -74,7 +89,10 @@ export class FieldVector {
   }
 
   innerProduct(other) {
-    return other.vector.reduce((accum, cur, i) => mcl.add(accum, mcl.mul(this.vector[i], cur)), new mcl.Fr());
+    return other.vector.reduce(
+      (accum, cur, i) => mcl.add(accum, mcl.mul(this.vector[i], cur)),
+      new mcl.Fr(),
+    );
   }
 
   concat(other) {
@@ -96,7 +114,11 @@ export class PointVector {
   }
 
   flip() {
-    return new PointVector(Array.from({ length: this.length() }).map((_, i) => this.vector[(this.length() - i) % this.length()]));
+    return new PointVector(
+      Array.from({ length: this.length() }).map(
+        (_, i) => this.vector[(this.length() - i) % this.length()],
+      ),
+    );
   }
 
   negate() {
@@ -108,15 +130,22 @@ export class PointVector {
   }
 
   sum() {
-    return this.vector.reduce((accum, cur) => mcl.add(accum, cur), new mcl.G1());
+    return this.vector.reduce(
+      (accum, cur) => mcl.add(accum, cur),
+      new mcl.G1(),
+    );
   }
 
   add(other) {
-    return new PointVector(other.vector.map((elem, i) => mcl.add(this.vector[i], elem)));
+    return new PointVector(
+      other.vector.map((elem, i) => mcl.add(this.vector[i], elem)),
+    );
   }
 
   hadamard(exponents) {
-    return new PointVector(exponents.vector.map((elem, i) => mcl.mul(this.vector[i], elem)));
+    return new PointVector(
+      exponents.vector.map((elem, i) => mcl.mul(this.vector[i], elem)),
+    );
   }
 
   times(constant) {
@@ -129,20 +158,32 @@ export class PointVector {
 }
 
 export class PedersenVectorCommitment {
-  static base = { // hardcode length 64 for zether
+  static base = {
+    // hardcode length 64 for zether
     gs: undefined,
     hs: undefined,
     h: undefined,
   };
 
-  static commit(gValues, hValues) { // vectors of already-reduced BNs
+  static commit(gValues, hValues) {
+    // vectors of already-reduced BNs
     const result = new PedersenVectorCommitment();
     result.gValues = gValues;
     result.hValues = hValues;
     result.randomness = BN128.randomScalar();
     result.point = mcl.mul(PedersenVectorCommitment.base.h, result.randomness);
-    result.point = mcl.add(result.point, PedersenVectorCommitment.base.gs.slice(0, gValues.length()).multiExponentiate(gValues));
-    result.point = mcl.add(result.point, PedersenVectorCommitment.base.hs.slice(0, hValues.length()).multiExponentiate(hValues));
+    result.point = mcl.add(
+      result.point,
+      PedersenVectorCommitment.base.gs
+        .slice(0, gValues.length())
+        .multiExponentiate(gValues),
+    );
+    result.point = mcl.add(
+      result.point,
+      PedersenVectorCommitment.base.hs
+        .slice(0, hValues.length())
+        .multiExponentiate(hValues),
+    );
     // the hacky-ass slices are necessary for the case of withdrawals, where gValues and hValues are shorter.
     return result;
   }
@@ -159,10 +200,14 @@ export class ElGamal {
   }
 
   static deserialize(account) {
-    return new ElGamal(BN128.fromCompressed(account[0]), BN128.fromCompressed(account[1]));
+    return new ElGamal(
+      BN128.fromCompressed(account[0]),
+      BN128.fromCompressed(account[1]),
+    );
   }
 
-  static commit(pub) { // this is only ever called with value 0! save a mul and an add.
+  static commit(pub) {
+    // this is only ever called with value 0! save a mul and an add.
     const result = new ElGamal(new mcl.G1(), new mcl.G1());
     result.randomness = BN128.randomScalar();
     result.left = mcl.mul(pub, result.randomness);
@@ -179,7 +224,10 @@ export class ElGamal {
   }
 
   add(other) {
-    return new ElGamal(this.left === undefined ? undefined : mcl.add(this.left, other.left), mcl.add(this.right, other.right));
+    return new ElGamal(
+      this.left === undefined ? undefined : mcl.add(this.left, other.left),
+      mcl.add(this.right, other.right),
+    );
   }
 
   sub(other) {
@@ -195,7 +243,10 @@ export class ElGamal {
   }
 
   plus(constant) {
-    return new ElGamal(mcl.add(this.left, mcl.mul(ElGamal.base.g, constant)), this.right);
+    return new ElGamal(
+      mcl.add(this.left, mcl.mul(ElGamal.base.g, constant)),
+      this.right,
+    );
   }
 }
 
@@ -205,26 +256,41 @@ export class ElGamalVector {
   }
 
   multiExponentiate(exponents) {
-    return new ElGamal(mcl.mulVec(this.vector.map((elem) => elem.left), exponents.vector), mcl.mulVec(this.vector.map((elem) => elem.right), exponents.vector));
+    return new ElGamal(
+      mcl.mulVec(
+        this.vector.map((elem) => elem.left),
+        exponents.vector,
+      ),
+      mcl.mulVec(
+        this.vector.map((elem) => elem.right),
+        exponents.vector,
+      ),
+    );
   }
 }
-
 
 export class Polynomial {
   constructor(coefficients) {
     this.coefficients = coefficients; // vector of coefficients, _little_ endian.
   }
 
-  mul(other) { // i assume that other has coeffs.length == 2, and monic if linear.
-    const result = this.coefficients.map((coefficient) => mcl.mul(coefficient, other.coefficients[0]));
+  mul(other) {
+    // i assume that other has coeffs.length == 2, and monic if linear.
+    const result = this.coefficients.map((coefficient) =>
+      mcl.mul(coefficient, other.coefficients[0]),
+    );
     result.push(new mcl.Fr());
-    if (other.coefficients[1].isOne()) this.coefficients.forEach((elem, i) => result[i + 1] = mcl.add(result[i + 1], elem));
+    if (other.coefficients[1].isOne())
+      this.coefficients.forEach(
+        (elem, i) => (result[i + 1] = mcl.add(result[i + 1], elem)),
+      );
     return new Polynomial(result);
   }
 }
 
 export class FieldVectorPolynomial {
-  constructor(...coefficients) { // an array of fieldvectors (2 in practice, but could be arbitrary).
+  constructor(...coefficients) {
+    // an array of fieldvectors (2 in practice, but could be arbitrary).
     this.coefficients = coefficients; // this can be made private
   }
 
@@ -239,14 +305,16 @@ export class FieldVectorPolynomial {
   }
 
   innerProduct(other) {
-    const result = Array(this.coefficients.length + other.coefficients.length - 1).fill(new mcl.Fr());
+    const result = Array(
+      this.coefficients.length + other.coefficients.length - 1,
+    ).fill(new mcl.Fr());
     this.coefficients.forEach((mine, i) => {
       other.coefficients.forEach((theirs, j) => {
         result[i + j] = mcl.add(result[i + j], mine.innerProduct(theirs));
       });
     });
     return result; // just a plain array?
-  };
+  }
 }
 
 export function recursivePolynomials(list, a, b) {
@@ -255,15 +323,24 @@ export function recursivePolynomials(list, a, b) {
   const bTop = b.pop();
   const left = new Polynomial([mcl.neg(aTop), mcl.sub(BN128.ONE, bTop)]); // X - f_k(X)
   const right = new Polynomial([aTop, bTop]); // f_k(X)
-  for (let i = 0; i < list.length; i++) list[i] = [list[i].mul(left), list[i].mul(right)];
+  for (let i = 0; i < list.length; i++)
+    list[i] = [list[i].mul(left), list[i].mul(right)];
   return recursivePolynomials(list.flat(), a, b);
 }
 
 export const algebra = BN128.promise.then(() => {
   PedersenCommitment.base.g = BN128.BASE;
   PedersenCommitment.base.h = BN128.mapInto(keccak256("h"));
-  PedersenVectorCommitment.base.gs = new PointVector(Array.from({ length: M << 1 }).map((_, i) => BN128.mapInto(keccak256(encodePacked(["string", "uint256"], ["g", i])))));
-  PedersenVectorCommitment.base.hs = new PointVector(Array.from({ length: M << 1 }).map((_, i) => BN128.mapInto(keccak256(encodePacked(["string", "uint256"], ["h", i])))));
+  PedersenVectorCommitment.base.gs = new PointVector(
+    Array.from({ length: M << 1 }).map((_, i) =>
+      BN128.mapInto(keccak256(encodePacked(["string", "uint256"], ["g", i]))),
+    ),
+  );
+  PedersenVectorCommitment.base.hs = new PointVector(
+    Array.from({ length: M << 1 }).map((_, i) =>
+      BN128.mapInto(keccak256(encodePacked(["string", "uint256"], ["h", i]))),
+    ),
+  );
   PedersenVectorCommitment.base.h = BN128.mapInto(keccak256("h"));
   ElGamal.base.g = PedersenCommitment.base.g;
 });

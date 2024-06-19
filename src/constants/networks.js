@@ -8,16 +8,16 @@ export const CHAINS = {
 };
 
 export const CHAIN_PARAMS = {
-  "Ethereum": {
-    chain: mainnet
+  Ethereum: {
+    chain: mainnet,
   },
   "OP Mainnet": {
-    chain: optimism
+    chain: optimism,
   },
   "Arbitrum One": {
-    chain: arbitrum
+    chain: arbitrum,
   },
-  "Base": {
-    chain: base
+  Base: {
+    chain: base,
   },
 };
