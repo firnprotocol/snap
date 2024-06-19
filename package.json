@@ -24,13 +24,20 @@
   },
   "devDependencies": {
     "@browserify/uglifyify": "^6.0.0",
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.5.0",
     "@lavamoat/allow-scripts": "^2.0.3",
     "@metamask/auto-changelog": "^2.6.0",
     "@metamask/snaps-cli": "^0.38.4-flask.1",
     "@metamask/snaps-types": "^0.38.3-flask.1",
     "@metamask/snaps-ui": "^0.37.5-flask.1",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
     "patch-package": "^8.0.0",
-    "postinstall-postinstall": "^2.1.0"
+    "postinstall-postinstall": "^2.1.0",
+    "prettier": "3.3.2"
   },
   "publishConfig": {
     "access": "public",
