@@ -113,7 +113,8 @@ BN128.promise = mcl.init(mcl.BN_SNARK1).then(() => {
     const s = mcl.add(mcl.mul(c, secret), k);
     return [toHex(c.serialize().reverse()), toHex(s.serialize().reverse())];
   };
-  BN128.gEpoch = (epoch) => BN128.mapInto(
+  BN128.gEpoch = (epoch) =>
+    BN128.mapInto(
       keccak256(encodePacked(["string", "uint256"], ["Firn Epoch", epoch])),
     );
 });
