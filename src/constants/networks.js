@@ -1,4 +1,4 @@
-import { arbitrum, mainnet, optimism, base } from "viem/chains";
+import { arbitrum, base,mainnet, optimism } from "viem/chains";
 
 export const CHAINS = {
   [mainnet.id]: "Ethereum",

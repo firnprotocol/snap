@@ -1,8 +1,8 @@
 import * as mcl from "mcl-wasm";
 import { encodeAbiParameters, keccak256, toBytes, toHex } from "viem";
 
-import { BN128 } from "./bn128";
 import { PedersenVectorCommitment } from "./algebra";
+import { BN128 } from "./bn128";
 
 export class InnerProductProof {
   serialize() {

@@ -1,12 +1,12 @@
 import * as mcl from "mcl-wasm";
-
 import { toHex } from "viem/utils";
-import { BN128 } from "./bn128";
-import { ElGamal, ElGamalVector, N, PointVector } from "./algebra";
-import { WithdrawalProof } from "./withdrawal";
-import { ADDRESSES } from "../constants/addresses";
+
 import { FIRN_ABI, READER_ABI } from "../constants/abis";
+import { ADDRESSES } from "../constants/addresses";
 import { nextEpoch } from "../utils/nextEpoch";
+import { ElGamal, ElGamalVector, N, PointVector } from "./algebra";
+import { BN128 } from "./bn128";
+import { WithdrawalProof } from "./withdrawal";
 
 export const EPOCH_LENGTH = 60;
 
@@ -46,7 +46,7 @@ export class Client {
   readBalance(account) {
     const exponent = ElGamal.decrypt(account, this.secret);
     let accumulator = new mcl.G1();
-    for (let i = 0; i < 2**32; i++) {
+    for (let i = 0; i < 2 ** 32; i++) {
       if (accumulator.isEqual(exponent)) return i;
       accumulator = mcl.add(accumulator, BN128.BASE);
     }

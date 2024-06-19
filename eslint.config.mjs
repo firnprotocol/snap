@@ -1,5 +1,7 @@
 import pluginJs from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
+
 import { FlatCompat } from "@eslint/eslintrc";
 
 const compat = new FlatCompat();
@@ -10,10 +12,15 @@ export default [
   eslintConfigPrettier,
   {
     rules: {
+      "simple-import-sort/imports": "error",
+      "simple-import-sort/exports": "error",
       "no-bitwise": "off",
       "no-plusplus": "off",
       "import/prefer-default-export": "off",
       camelcase: "off",
+    },
+    plugins: {
+      "simple-import-sort": simpleImportSort,
     },
     ignores: [
       "node_modules",

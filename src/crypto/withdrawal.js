@@ -1,19 +1,19 @@
 import * as mcl from "mcl-wasm";
 import { encodeAbiParameters, keccak256, toBytes, toHex } from "viem";
 
-import { BN128 } from "./bn128";
 import {
-  PedersenCommitment,
   ElGamal,
-  PedersenVectorCommitment,
   FieldVector,
   FieldVectorPolynomial,
-  n,
-  N,
   M,
+  N,
+  n,
+  PedersenCommitment,
+  PedersenVectorCommitment,
   Polynomial,
   recursivePolynomials,
 } from "./algebra";
+import { BN128 } from "./bn128";
 import { InnerProductProof } from "./innerproduct";
 
 export class WithdrawalProof {
@@ -111,7 +111,7 @@ export class WithdrawalProof {
       }),
     );
     const c = new FieldVector(
-      a.vector.map((elem, i) => b.vector[i].isOne() ? mcl.neg(elem) : elem),
+      a.vector.map((elem, i) => (b.vector[i].isOne() ? mcl.neg(elem) : elem)),
     );
     const d = a.hadamard(a).negate();
     result.A = PedersenVectorCommitment.commit(a, d); // warning: semantic change for contract
@@ -135,10 +135,10 @@ export class WithdrawalProof {
             [
               { name: "", type: "uint256" },
               { name: "", type: "uint256" },
-              { name: "", type: `bytes32[2][${  N  }]` },
-              { name: "", type: `bytes32[2][${  N  }]` },
-              { name: "", type: `bytes32[2][${  N  }]` },
-              { name: "", type: `bytes32[2][${  N  }]` },
+              { name: "", type: `bytes32[2][${N}]` },
+              { name: "", type: `bytes32[2][${N}]` },
+              { name: "", type: `bytes32[2][${N}]` },
+              { name: "", type: `bytes32[2][${N}]` },
               { name: "", type: "bytes32[2]" },
               { name: "", type: "uint256" },
               { name: "", type: "uint256" },
@@ -216,12 +216,12 @@ export class WithdrawalProof {
           encodeAbiParameters(
             [
               { name: "", type: "bytes32" },
-              { name: "", type: `bytes32[2][${  n  }]` },
-              { name: "", type: `bytes32[2][${  n  }]` },
-              { name: "", type: `bytes32[2][${  n  }]` },
-              { name: "", type: `bytes32[2][${  n  }]` },
-              { name: "", type: `bytes32[2][${  n  }]` },
-              { name: "", type: `bytes32[2][${  n  }]` },
+              { name: "", type: `bytes32[2][${n}]` },
+              { name: "", type: `bytes32[2][${n}]` },
+              { name: "", type: `bytes32[2][${n}]` },
+              { name: "", type: `bytes32[2][${n}]` },
+              { name: "", type: `bytes32[2][${n}]` },
+              { name: "", type: `bytes32[2][${n}]` },
             ],
             [
               toHex(v.serialize().reverse()),
