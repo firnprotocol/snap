@@ -1,0 +1,52 @@
+# Node modules directory
+node_modules
+
+# Build directories
+dist
+build
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log files
+*.log
+
+# IDE and editor configuration files
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Public directory (if applicable)
+public
+
+# Test coverage directory
+coverage
+
+# Minified files
+*.min.js
+*.min.css
+
+# Ignore specific file types
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.webp
+
+# Ignore prettier configuration files to avoid self-formatting
+.prettierrc
+.prettierrc.js
+.prettierrc.json
+.prettierrc.yml
+.prettierignore

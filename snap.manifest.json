@@ -1,0 +1,32 @@
+{
+  "version": "1.5.0",
+  "description": "Firn's official MetaMask Snap.",
+  "proposedName": "Firn Protocol",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firnprotocol/snap.git"
+  },
+  "source": {
+    "shasum": "48RgKEv3TI0QxFsXjf6ipAkNsFjNoWIZ8RQdlTWEZP4=",
+    "location": {
+      "npm": {
+        "filePath": "dist/bundle.js",
+        "iconPath": "images/firn.svg",
+        "packageName": "@firnprotocol/snap",
+        "registry": "https://registry.npmjs.org/"
+      }
+    }
+  },
+  "initialPermissions": {
+    "snap_dialog": {},
+    "snap_manageState": {},
+    "endowment:rpc": {
+      "dapps": true,
+      "snaps": false
+    },
+    "endowment:network-access": {},
+    "endowment:ethereum-provider": {},
+    "endowment:webassembly": {}
+  },
+  "manifestVersion": "0.1"
+}

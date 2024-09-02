@@ -1,0 +1,49 @@
+{
+  "name": "@firnprotocol/snap",
+  "version": "1.5.0",
+  "description": "Firn Protocol's official MetaMask Snap.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/firnprotocol/snap.git"
+  },
+  "files": [
+    "src/",
+    "dist/",
+    "images/",
+    "snap.manifest.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "mm-snap build",
+    "serve": "mm-snap serve",
+    "start": "mm-snap watch"
+  },
+  "dependencies": {
+    "mcl-wasm": "^1.4.0",
+    "viem": "^2.16.5"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.5.0",
+    "@lavamoat/allow-scripts": "^3.0.4",
+    "@metamask/auto-changelog": "^3.4.4",
+    "@metamask/snaps-cli": "^6.2.1",
+    "@metamask/snaps-types": "^3.1.0",
+    "@metamask/snaps-ui": "^3.1.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-simple-import-sort": "^12.1.0",
+    "prettier": "^3.3.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "bugs": {
+    "url": "https://github.com/firnprotocol/snap/issues"
+  },
+  "homepage": "https://npmjs.com/package/@firnprotocol/snap",
+  "license": "ISC"
+}
